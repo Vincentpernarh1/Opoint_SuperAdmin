@@ -5,6 +5,10 @@ import { api } from '../../services/api';
 import { BuildingOfficeIcon, ArrowLeftIcon } from '../Icons/Icons';
 import Loading from '../Loading/Loading';
 import NotificationOverlay from '../NotificationOverlay/NotificationOverlay';
+import { DndContext, closestCenter, DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import './EditCompanyPage.scss';
 
 const EditCompanyPage = ({ theme }: { theme: 'light' | 'dark' }) => {
@@ -25,13 +29,8 @@ const EditCompanyPage = ({ theme }: { theme: 'light' | 'dark' }) => {
     const [licenseCount, setLicenseCount] = useState(10);
     const [registrationId, setRegistrationId] = useState('');
     const [address, setAddress] = useState('');
-    const [modules, setModules] = useState({
-        payroll: true,
-        leave: true,
-        expenses: true,
-        reports: true,
-        announcements: true,
-    });
+    const [enabledModules, setEnabledModules] = useState<string[]>([]);
+    const [disabledModules, setDisabledModules] = useState<string[]>([]);
 
     useEffect(() => {
         const fetchCompany = async () => {
@@ -50,7 +49,9 @@ const EditCompanyPage = ({ theme }: { theme: 'light' | 'dark' }) => {
                 setLicenseCount(companyData.licenseCount);
                 setRegistrationId(companyData.registrationId || '');
                 setAddress(companyData.address || '');
-                setModules(companyData.modules);
+                const allModules = Object.keys(companyData.modules);
+                setEnabledModules(allModules.filter(key => companyData.modules[key as keyof typeof companyData.modules]));
+                setDisabledModules(allModules.filter(key => !companyData.modules[key as keyof typeof companyData.modules]));
             } catch (err) {
                 console.error('Error fetching company:', err);
                 setLoadError('Failed to load company details');
@@ -64,7 +65,11 @@ const EditCompanyPage = ({ theme }: { theme: 'light' | 'dark' }) => {
 
     const handleModuleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, checked } = e.target;
-        setModules(prev => ({ ...prev, [name]: checked }));
+        if (checked) {
+            setEnabledModules(prev => [...prev, name]);
+        } else {
+            setEnabledModules(prev => prev.filter(m => m !== name));
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -73,6 +78,14 @@ const EditCompanyPage = ({ theme }: { theme: 'light' | 'dark' }) => {
 
         setSaving(true);
         setNotification(null);
+
+        const modules = {
+            payroll: enabledModules.includes('payroll'),
+            leave: enabledModules.includes('leave'),
+            expenses: enabledModules.includes('expenses'),
+            reports: enabledModules.includes('reports'),
+            announcements: enabledModules.includes('announcements'),
+        };
 
         const updates = {
             name,
@@ -128,6 +141,14 @@ const EditCompanyPage = ({ theme }: { theme: 'light' | 'dark' }) => {
             </div>
         );
     }
+
+    const modules = {
+        payroll: enabledModules.includes('payroll'),
+        leave: enabledModules.includes('leave'),
+        expenses: enabledModules.includes('expenses'),
+        reports: enabledModules.includes('reports'),
+        announcements: enabledModules.includes('announcements'),
+    };
 
     const moduleKeys = Object.keys(modules) as (keyof typeof modules)[];
 

@@ -9,7 +9,8 @@ import {
   XCircleIcon,
   ArrowLeftIcon,
   PencilIcon,
-  UsersGroupIcon
+  UsersGroupIcon,
+  MailIcon
 } from '../Icons/Icons';
 import Loading from '../Loading/Loading';
 import './CompanyDetails.scss';
@@ -192,8 +193,79 @@ const CompanyDetails = ({ theme }: { theme: 'light' | 'dark' }) => {
                 <span className="value">{formatDate(company.updatedAt)}</span>
               </div>
             </div>
+
+
           </div>
 
+           {/* Login Access */}
+          <div className="detail-card">
+            <div className="card-header">
+              <BuildingOfficeIcon className="card-icon" />
+              <h3>Login Access</h3>
+            </div>
+            <div className="card-content">
+              {company.loginUrl && (
+                <div className="login-access-section">
+                  <div className="detail-row">
+                    <span className="label">Login URL:</span>
+                    <div className="url-container">
+                      <input
+                        type="text"
+                        value={company.loginUrl}
+                        readOnly
+                        className="url-input"
+                          aria-label="Login URL"
+                        onClick={(e) => e.currentTarget.select()}
+                      />
+                      <button
+                        onClick={() => navigator.clipboard.writeText(company.loginUrl!)}
+                        className="copy-btn"
+                        title="Copy URL"
+                      >
+                        Copy
+                      </button>
+                    </div>
+                  </div>
+                  {company.tableName && (
+                    <div className="detail-row">
+                      <span className="label">Table Name:</span>
+                      <div className="url-container">
+                        <input
+                          type="text"
+                          aria-label="Login URL"
+                          value={company.tableName}
+                          readOnly
+                          className="url-input"
+                          onClick={(e) => e.currentTarget.select()}
+                        />
+                        <button
+                          onClick={() => navigator.clipboard.writeText(company.tableName!)}
+                          className="copy-btn"
+                          title="Copy Table Name"
+                        >
+                          Copy
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  {company.adminEmail && (
+                    <div className="email-action">
+                      <a
+                        href={`mailto:${company.adminEmail}?subject=Company Login Link&body=Your login link: ${encodeURIComponent(company.loginUrl || '')}`}
+                        className="email-btn"
+                      >
+                        <MailIcon className="email-icon" />
+                        Send Login Link via Email
+                      </a>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          
+          
           {/* Modules */}
           <div className="detail-card full-width">
             <div className="card-header">
@@ -217,6 +289,8 @@ const CompanyDetails = ({ theme }: { theme: 'light' | 'dark' }) => {
               </div>
             </div>
           </div>
+
+
         </div>
 
         {/* Quick Actions */}

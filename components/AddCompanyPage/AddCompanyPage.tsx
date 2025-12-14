@@ -5,6 +5,7 @@ import { api } from '../../services/api';
 import { UserCircleIcon, MailIcon, ArrowLeftIcon, BuildingOfficeIcon } from '../Icons/Icons';
 import NotificationOverlay from '../NotificationOverlay/NotificationOverlay';
 import Loading from '../Loading/Loading';
+import { encrypt } from '../../utils/encryption';
 import './AddCompanyPage.scss';
 
 const AddCompanyPage = () => {
@@ -45,7 +46,10 @@ const AddCompanyPage = () => {
 
         try {
             const result = await api.createCompanyAndAdmin(data);
-            const successMessage = `Company "${result.company.name}" onboarded successfully! Admin details stored in company record.`;
+            const encryptedId = encrypt(result.company.id);
+            const baseUrl = process.env.REACT_APP_BASE_URL || 'https://yourapp.com'; // Set your base URL in env
+            const loginUrl = `${baseUrl}/${encryptedId}/login`;
+            const successMessage = `Company "${result.company.name}" onboarded successfully! Admin details stored in company record. Share this login link with the admin: ${loginUrl}`;
             setNotification({
                 message: successMessage,
                 type: 'success',
@@ -73,6 +77,7 @@ const AddCompanyPage = () => {
                 type={notification?.type || 'success'}
                 isVisible={notification?.isVisible || false}
                 onClose={() => setNotification(null)}
+                autoClose={notification?.type !== 'success'}
             />
             <header className="add-company-page__header">
                 <Link to="/dashboard/companies" className="add-company-page__back-link">

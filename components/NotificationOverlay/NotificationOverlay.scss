@@ -29,12 +29,13 @@
     background-color: white;
     border-radius: 12px;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    max-width: 400px;
+    max-width: 600px;
     width: 100%;
     animation: slideIn 0.3s ease-out;
 
     &--success {
       border-left: 4px solid #10b981;
+      max-width: 800px;
     }
 
     &--error {

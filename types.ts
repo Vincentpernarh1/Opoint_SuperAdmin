@@ -36,6 +36,8 @@ export interface Company {
   address?: string;
   adminName?: string;
   adminEmail?: string;
+  loginUrl?: string;
+  tableName?: string;
   createdAt: Date;
   updatedAt: Date | null;
   adminId?: string;

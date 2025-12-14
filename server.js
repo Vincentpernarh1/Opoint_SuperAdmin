@@ -331,6 +331,8 @@ function transformCompany(company) {
         address: company.address,
         adminName: company.admin_name,
         adminEmail: company.admin_email,
+        loginUrl: company.login_url,
+        tableName: company.table_name,
         createdAt: parseDate(company.created_at),
         updatedAt: parseDate(company.updated_at),
         adminId: company.admin_id

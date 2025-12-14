@@ -8,15 +8,16 @@ interface NotificationOverlayProps {
   onClose: () => void;
   isVisible: boolean;
   theme?: 'light' | 'dark';
+  autoClose?: boolean;
 }
 
-const NotificationOverlay = ({ message, type, onClose, isVisible, theme = 'light' }: NotificationOverlayProps) => {
+const NotificationOverlay = ({ message, type, onClose, isVisible, theme = 'light', autoClose = true }: NotificationOverlayProps) => {
   useEffect(() => {
-    if (isVisible) {
+    if (isVisible && autoClose) {
       const timer = setTimeout(onClose, 4000);
       return () => clearTimeout(timer);
     }
-  }, [isVisible, onClose]);
+  }, [isVisible, onClose, autoClose]);
 
   if (!isVisible) return null;
 

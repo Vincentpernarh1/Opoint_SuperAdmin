@@ -1,5 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcrypt';
+import CryptoJS from 'crypto-js';
+
+// Encryption functions
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'your-default-secret-key-change-this';
+
+function encrypt(text) {
+  return CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
+}
+
+function decrypt(encryptedText) {
+  const bytes = CryptoJS.AES.decrypt(encryptedText, ENCRYPTION_KEY);
+  return bytes.toString(CryptoJS.enc.Utf8);
+}
 
 let supabase = null;
 let supabaseAdmin = null;
@@ -543,6 +556,11 @@ export const db = {
             }
             
             // Then, insert the company using regular client
+            const encryptedId = encrypt(companyId);
+            const baseUrl = process.env.BASE_URL || 'http://localhost:5173'; // Adjust port as needed
+            const loginUrl = `${baseUrl}/${encryptedId}/login`;
+            const tableName = `company_${companyData.name.toLowerCase().replace(/ /g, '_')}_users`;
+            
             const { data, error } = await client
                 .from('opoint_companies')
                 .insert({
@@ -557,6 +575,8 @@ export const db = {
                     address: companyData.address || null,
                     admin_name: companyData.adminName,
                     admin_email: companyData.adminEmail,
+                    login_url: loginUrl,
+                    table_name: tableName,
                     created_at: new Date().toISOString(),
                     updated_at: new Date().toISOString(),
                     admin_id: adminId

@@ -186,50 +186,118 @@
           }
 
           .license-usage {
-            margin-top: 1rem;
+  margin-top: 1rem;
 
-            .usage-bar {
-              width: 100%;
-              height: 0.5rem;
-              background-color: #e5e7eb;
-              border-radius: 9999px;
-              overflow: hidden;
-              margin-bottom: 0.5rem;
+  .usage-bar {
+    width: 100%;
+    height: 0.5rem;
+    background-color: #e5e7eb;
+    border-radius: 9999px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
 
-              .usage-fill {
-                height: 100%;
-                width: 0%;
-                background-color: constants.$primary-color;
-                transition: width 0.3s ease;
+    .usage-fill {
+      height: 100%;
+      width: 0%;
+      background-color: constants.$primary-color;
+      transition: width 0.3s ease;
 
-                // Generate width classes for each percentage
-                @for $i from 0 through 100 {
-                  &.usage-#{$i} {
-                    width: #{$i}%;
-                  }
+      // Generate width classes for each percentage
+      @for $i from 0 through 100 {
+        &.usage-#{$i} {
+          width: $i * 1%;
+        }
+      }
+    }
+  }
+}
+
+        
+
+          .login-access-section {
+            .url-container {
+              display: flex;
+              gap: 0.5rem;
+              align-items: center;
+              flex: 1;
+
+              .url-input {
+                flex: 1;
+                padding: 0.5rem;
+                border: 1px solid #d1d5db;
+                border-radius: 0.375rem;
+                font-size: 0.875rem;
+                background-color: white;
+                cursor: text;
+
+                &:focus {
+                  outline: none;
+                  border-color: constants.$primary-color;
+                  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+                }
+              }
+
+              .copy-btn {
+                padding: 0.5rem 0.75rem;
+                border: 1px solid #d1d5db;
+                border-radius: 0.375rem;
+                background-color: white;
+                color: #374151;
+                font-size: 0.875rem;
+                cursor: pointer;
+                transition: all 0.2s;
+
+                &:hover {
+                  background-color: #f3f4f6;
+                  border-color: #9ca3af;
                 }
               }
             }
 
-            .usage-text {
-              font-size: 0.75rem;
-              color: #6b7280;
-              text-align: center;
+            .email-action {
+              margin-top: 1rem;
+
+              .email-btn {
+                display: inline-flex;
+                align-items: center;
+                padding: 0.75rem 1rem;
+                background-color: constants.$primary-color;
+                color: white;
+                border-radius: 0.5rem;
+                text-decoration: none;
+                font-weight: 500;
+                transition: background-color 0.2s;
+
+                &:hover {
+                  background-color: color.adjust(constants.$primary-color, $lightness: -10%);
+                }
+
+                .email-icon {
+                  height: 1.25rem;
+                  width: 1.25rem;
+                  margin-right: 0.5rem;
+                }
+              }
             }
           }
+        }
+      }
+    }
 
-          .modules-grid {
+
+.modules-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 1rem;
-
-            .module-item {
+        }
+    .module-item {
               display: flex;
               align-items: center;
               padding: 0.75rem;
               border-radius: 0.5rem;
               border: 1px solid #e5e7eb;
               transition: all 0.2s;
+            
 
               &.enabled {
                 background-color: #dcfce7;
@@ -240,7 +308,7 @@
                 }
 
                 .module-name {
-                  color: #166534;
+                  color: #005c23;
                   font-weight: 500;
                 }
               }
@@ -269,10 +337,6 @@
                 font-size: 0.875rem;
               }
             }
-          }
-        }
-      }
-    }
 
     .quick-actions {
       background-color: white;

@@ -29,6 +29,8 @@ CREATE TABLE IF NOT EXISTS opoint_companies (
     address TEXT,
     admin_name VARCHAR(255),
     admin_email VARCHAR(255),
+    login_url TEXT,
+    table_name VARCHAR(255),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     admin_id UUID
@@ -37,6 +39,8 @@ CREATE TABLE IF NOT EXISTS opoint_companies (
 -- Add admin columns if they don't exist (for existing tables)
 ALTER TABLE opoint_companies ADD COLUMN IF NOT EXISTS admin_name VARCHAR(255);
 ALTER TABLE opoint_companies ADD COLUMN IF NOT EXISTS admin_email VARCHAR(255);
+ALTER TABLE opoint_companies ADD COLUMN IF NOT EXISTS login_url TEXT;
+ALTER TABLE opoint_companies ADD COLUMN IF NOT EXISTS table_name VARCHAR(255);
 
 
 
