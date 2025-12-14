@@ -14,16 +14,29 @@ import {
   UsersGroupIcon,
   SearchIcon
 } from '../Icons/Icons';
-import Notification from '../Notification/Notification';
+import Loading from '../Loading/Loading';
+import NotificationOverlay from '../NotificationOverlay/NotificationOverlay';
+import ConfirmationModal from '../ConfirmationModal/ConfirmationModal';
 import './Companies.scss';
 
 const Companies = ({ theme }: { theme: 'light' | 'dark' }) => {
+//   console.log('Companies component rendered');
+  
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<CompanyStatus | 'all'>('all');
   const [selectedCompanies, setSelectedCompanies] = useState<Set<string>>(new Set());
-  const [notification, setNotification] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{
+    message: string;
+    type: 'success' | 'error';
+    isVisible: boolean;
+  } | null>(null);
+  const [confirmationModal, setConfirmationModal] = useState<{
+    isVisible: boolean;
+    message: string;
+    onConfirm: () => void;
+  } | null>(null);
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -46,24 +59,40 @@ const Companies = ({ theme }: { theme: 'light' | 'dark' }) => {
   const handleBulkActivate = async () => {
     try {
       await Promise.all(Array.from(selectedCompanies).map(id => api.updateCompany(id, { status: CompanyStatus.ACTIVE })));
-      setNotification(`Activated ${selectedCompanies.size} companies`);
+      setNotification({
+        message: `Activated ${selectedCompanies.size} companies`,
+        type: 'success',
+        isVisible: true
+      });
       setSelectedCompanies(new Set());
       loadCompanies();
     } catch (error) {
       console.error('Failed to activate companies:', error);
-      setNotification('Failed to activate companies');
+      setNotification({
+        message: 'Failed to activate companies',
+        type: 'error',
+        isVisible: true
+      });
     }
   };
 
   const handleBulkDeactivate = async () => {
     try {
       await Promise.all(Array.from(selectedCompanies).map(id => api.updateCompany(id, { status: CompanyStatus.INACTIVE })));
-      setNotification(`Deactivated ${selectedCompanies.size} companies`);
+      setNotification({
+        message: `Deactivated ${selectedCompanies.size} companies`,
+        type: 'success',
+        isVisible: true
+      });
       setSelectedCompanies(new Set());
       loadCompanies();
     } catch (error) {
       console.error('Failed to deactivate companies:', error);
-      setNotification('Failed to deactivate companies');
+      setNotification({
+        message: 'Failed to deactivate companies',
+        type: 'error',
+        isVisible: true
+      });
     }
   };
 
@@ -76,37 +105,69 @@ const Companies = ({ theme }: { theme: 'light' | 'dark' }) => {
       const data = await api.getCompanies();
       setCompanies(data);
     } catch (error) {
-      setNotification('Failed to load companies');
+      setNotification({
+        message: 'Failed to load companies',
+        type: 'error',
+        isVisible: true
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleStatusToggle = async (company: Company) => {
-    const newStatus = company.status === CompanyStatus.ACTIVE ? CompanyStatus.INACTIVE : CompanyStatus.ACTIVE;
-    try {
-      await api.updateCompany(company.id, { status: newStatus });
-      setCompanies(prev => prev.map(c =>
-        c.id === company.id ? { ...c, status: newStatus, updatedAt: new Date() } : c
-      ));
-      setNotification(`Company "${company.name}" ${newStatus.toLowerCase()}`);
-    } catch (error) {
-      setNotification('Failed to update company status');
-    }
+  const handleStatusToggle = (company: Company) => {
+    const isActivating = company.status === CompanyStatus.INACTIVE;
+    const action = isActivating ? 'activate' : 'deactivate';
+    setConfirmationModal({
+      isVisible: true,
+      message: `Are you sure you want to ${action} "${company.name}"?`,
+      onConfirm: async () => {
+        const newStatus = isActivating ? CompanyStatus.ACTIVE : CompanyStatus.INACTIVE;
+        try {
+          await api.updateCompany(company.id, { status: newStatus });
+          setCompanies(prev => prev.map(c =>
+            c.id === company.id ? { ...c, status: newStatus, updatedAt: new Date() } : c
+          ));
+          setNotification({
+            message: `Company "${company.name}" ${newStatus.toLowerCase()}`,
+            type: 'success',
+            isVisible: true
+          });
+        } catch (error) {
+          setNotification({
+            message: 'Failed to update company status',
+            type: 'error',
+            isVisible: true
+          });
+        }
+        setConfirmationModal(null);
+      }
+    });
   };
 
-  const handleDelete = async (company: Company) => {
-    if (!window.confirm(`Are you sure you want to delete "${company.name}"? This action cannot be undone.`)) {
-      return;
-    }
-
-    try {
-      await api.deleteCompany(company.id);
-      setCompanies(prev => prev.filter(c => c.id !== company.id));
-      setNotification(`Company "${company.name}" deleted successfully`);
-    } catch (error) {
-      setNotification('Failed to delete company');
-    }
+  const handleDelete = (company: Company) => {
+    setConfirmationModal({
+      isVisible: true,
+      message: `Are you sure you want to delete "${company.name}"? This action cannot be undone.`,
+      onConfirm: async () => {
+        try {
+          await api.deleteCompany(company.id);
+          setCompanies(prev => prev.filter(c => c.id !== company.id));
+          setNotification({
+            message: `Company "${company.name}" deleted successfully`,
+            type: 'success',
+            isVisible: true
+          });
+        } catch (error) {
+          setNotification({
+            message: 'Failed to delete company',
+            type: 'error',
+            isVisible: true
+          });
+        }
+        setConfirmationModal(null);
+      }
+    });
   };
 
   const filteredCompanies = companies.filter(company => {
@@ -131,18 +192,26 @@ const Companies = ({ theme }: { theme: 'light' | 'dark' }) => {
   };
 
   if (loading) {
-    return <div className="loading">Loading companies...</div>;
+    return <Loading message="Loading companies..." size="large" fullScreen={true} />;
   }
 
   return (
     <>
-      {notification && (
-        <Notification
-          message={notification}
-          type="success"
-          onClose={() => setNotification(null)}
-        />
-      )}
+      <NotificationOverlay
+        message={notification?.message || ''}
+        type={notification?.type || 'success'}
+        isVisible={notification?.isVisible || false}
+        onClose={() => setNotification(null)}
+        theme={theme}
+      />
+
+      <ConfirmationModal
+        isVisible={confirmationModal?.isVisible || false}
+        message={confirmationModal?.message || ''}
+        onConfirm={confirmationModal?.onConfirm || (() => {})}
+        onCancel={() => setConfirmationModal(null)}
+        theme={theme}
+      />
 
       <div className={`companies-page ${theme}`}>
         <div className="page-header">
@@ -226,6 +295,9 @@ const Companies = ({ theme }: { theme: 'light' | 'dark' }) => {
                     {company.address && (
                       <p className="company-address">{company.address}</p>
                     )}
+                    {company.adminName && (
+                      <p className="company-admin">Admin: {company.adminName}</p>
+                    )}
                   </div>
                 </div>
                 {getStatusBadge(company.status)}
@@ -270,7 +342,7 @@ const Companies = ({ theme }: { theme: 'light' | 'dark' }) => {
 
               <div className="card-footer">
                 <span className="updated-date">
-                  Updated: {company.updatedAt.toLocaleDateString()}
+                  Updated: {(company.updatedAt && company.updatedAt instanceof Date && !isNaN(company.updatedAt.getTime())) ? company.updatedAt.toLocaleDateString() : (company.createdAt && company.createdAt instanceof Date && !isNaN(company.createdAt.getTime())) ? company.createdAt.toLocaleDateString() : 'N/A'}
                 </span>
               </div>
             </div>

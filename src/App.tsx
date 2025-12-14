@@ -11,8 +11,12 @@ import { authService } from '../services/authService';
 const SuperAdminDashboard = lazy(() => import('../components/SuperAdminDashboard/SuperAdminDashboard'));
 const AddCompanyPage = lazy(() => import('../components/AddCompanyPage/AddCompanyPage'));
 const Companies = lazy(() => import('../components/Companies/Companies'));
+import CompanyDetails from '../components/CompanyDetails/CompanyDetails';
+import EditCompanyPage from '../components/EditCompanyPage/EditCompanyPage';
 const Users = lazy(() => import('../components/Users/Users'));
 const Settings = lazy(() => import('../components/Settings/Settings'));
+const SuperAdmins = lazy(() => import('../components/SuperAdmins/SuperAdmins'));
+const EditSuperAdmin = lazy(() => import('../components/EditSuperAdmin/EditSuperAdmin'));
 import './App.css';
 
 const App = () => {
@@ -67,9 +71,13 @@ const App = () => {
             }
           >
             <Route index element={<SuperAdminDashboard currentUser={currentUser!} theme={theme} />} />
+            <Route path="companies/:id" element={<CompanyDetails theme={theme} />} />
             <Route path="companies" element={<Companies theme={theme} />} />
             <Route path="companies/add" element={<AddCompanyPage />} />
+            <Route path="companies/:id/edit" element={<EditCompanyPage theme={theme} />} />
             <Route path="users" element={<Users theme={theme} />} />
+            <Route path="superadmins" element={<SuperAdmins theme={theme} />} />
+            <Route path="superadmins/:id/edit" element={<EditSuperAdmin theme={theme} />} />
             <Route path="settings" element={<Settings currentUser={currentUser!} onUpdateUser={() => {}} theme={theme} />} />
           </Route>
         </Routes>
@@ -93,6 +101,7 @@ const DashboardLayout = ({
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
 }) => {
+  // console.log('DashboardLayout rendering');
   return (
     <div className="dashboard-layout">
       <Sidebar

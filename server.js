@@ -41,13 +41,22 @@ const CONFIG = {
 
 // --- FALLBACK MOCK DATA (Used when database is not configured) ---
 const MOCK_USERS = [
-    { id: '1', name: 'Alice Johnson', email: 'alice@vertex.com', role: 'Employee', basic_salary: 8000, mobile_money_number: '0240123456', company_id: 'vertex' },
+    { id: '1', name: 'Alice Johnson', email: 'alice@vertex.com', role: 'Admin', basic_salary: 8000, mobile_money_number: '0240123456', company_id: 'vertex' },
     { id: '2', name: 'Bob Williams', email: 'bob@vertex.com', role: 'Employee', basic_salary: 6000, mobile_money_number: '0551234567', company_id: 'vertex' },
     { id: '3', name: 'Charlie Brown', email: 'charlie@summit.inc', role: 'Admin', basic_salary: 70000, mobile_money_number: '0272345678', company_id: 'summit' },
     { id: '4', name: 'Diana Prince', email: 'diana@vertex.com', role: 'Employee', basic_salary: 3500, mobile_money_number: '0503456789', company_id: 'vertex' },
     { id: '5', name: 'Eva Green', email: 'eva@vertex.com', role: 'HR', basic_salary: 12000, mobile_money_number: '0201112222', company_id: 'vertex' },
     { id: '6', name: 'Frank Miller', email: 'frank@vertex.com', role: 'Operations', basic_salary: 11000, mobile_money_number: '0543334444', company_id: 'vertex' },
     { id: '7', name: 'Grace Jones', email: 'grace@summit.inc', role: 'Payments', basic_salary: 15000, mobile_money_number: '0265556666', company_id: 'summit' },
+    { id: '8', name: 'Henry Wilson', email: 'henry@vpena.com', role: 'Admin', basic_salary: 25000, mobile_money_number: '0577778888', company_id: 'vpena' },
+    { id: '9', name: 'Admin User', email: 'admin@vpena.com', role: 'Admin', basic_salary: 30000, mobile_money_number: '0240000000', company_id: '1ed88d70-725a-4ec0-be81-0d4fd5670cf0' },
+    { id: '934674dd-c37c-4cf8-9053-5c452b85f32c', name: 'Vpena Admin', email: 'admin@vpena.com', role: 'Admin', basic_salary: 30000, mobile_money_number: '0240000000', company_id: '1ed88d70-725a-4ec0-be81-0d4fd5670cf0' },
+];
+
+const MOCK_COMPANIES = [
+    { id: 'vertex', name: 'Vertex Innovations Ltd.', license_count: 50, used_licenses: 7, status: 'Active', modules: { payroll: true, leave: true, expenses: true, reports: true, announcements: true }, description: 'Leading tech innovation company specializing in software solutions.', created_at: '2023-01-15', updated_at: '2024-12-01', admin_id: '1', admin_name: 'Alice Johnson', admin_email: 'alice@vertex.com' },
+    { id: 'summit', name: 'Summit Solutions Inc.', license_count: 10, used_licenses: 3, status: 'Active', modules: { payroll: true, leave: true, expenses: false, reports: true, announcements: false }, description: 'Consulting and solutions provider for enterprise clients.', created_at: '2022-06-20', updated_at: '2024-11-15', admin_id: '3', admin_name: 'Charlie Brown', admin_email: 'charlie@summit.inc' },
+    { id: 'vpena', name: 'Vpena Teck', license_count: 25, used_licenses: 5, status: 'Active', modules: { payroll: true, leave: true, expenses: true, reports: true, announcements: true }, description: 'Technology solutions provider.', created_at: '2023-08-10', updated_at: '2024-12-14', admin_id: '8', admin_name: 'Henry Wilson', admin_email: 'henry@vpena.com' },
 ];
 
 // In-memory storage for transaction logs (Used when database not configured)
@@ -278,9 +287,18 @@ const momoService = new MomoService();
 // --- UTILITY FUNCTIONS ---
 async function getUsers() {
     const { data, error } = await db.getUsers();
-    if (error || !data || data.length === 0) {
+    if (error) {
         console.log('⚠️  Using fallback mock data (database not configured)');
         return MOCK_USERS;
+    }
+    return data || [];
+}
+
+async function getCompanies() {
+    const { data, error } = await db.getAllCompanies();
+    if (error || !data || data.length === 0) {
+        console.log('⚠️  Using fallback mock companies (database not configured)');
+        return MOCK_COMPANIES;
     }
     return data;
 }
@@ -291,6 +309,52 @@ async function getUserById(userId) {
         return MOCK_USERS.find(u => u.id === userId);
     }
     return data;
+}
+
+// Transform database company data to frontend format
+function transformCompany(company) {
+    const parseDate = (dateStr) => {
+        if (!dateStr) return null;
+        const date = new Date(typeof dateStr === 'string' ? dateStr.replace(' ', 'T') : dateStr);
+        return isNaN(date.getTime()) ? null : date;
+    };
+
+    return {
+        id: company.id,
+        name: company.name,
+        licenseCount: company.license_count,
+        usedLicenses: company.used_licenses,
+        status: company.status,
+        modules: company.modules,
+        description: company.description,
+        registrationId: company.registration_id,
+        address: company.address,
+        adminName: company.admin_name,
+        adminEmail: company.admin_email,
+        createdAt: parseDate(company.created_at),
+        updatedAt: parseDate(company.updated_at),
+        adminId: company.admin_id
+    };
+}
+
+// Transform database user data to frontend format
+function transformUser(user) {
+    return {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+        avatarUrl: user.avatar_url,
+        team: user.team || '',
+        companyId: user.company_id,
+        basicSalary: parseFloat(user.basic_salary),
+        hireDate: user.hire_date ? new Date(user.hire_date) : undefined,
+        mobileMoneyNumber: user.mobile_money_number,
+        lastLogin: user.last_login ? new Date(user.last_login.replace(' ', 'T')) : undefined,
+        createdAt: new Date(user.created_at.replace(' ', 'T')),
+        updatedAt: new Date(user.updated_at.replace(' ', 'T'))
+    };
 }
 
 // --- API ENDPOINTS ---
@@ -807,6 +871,301 @@ app.get('/api/superadmin/list', async (req, res) => {
     }
 });
 
+app.post('/api/superadmin/reset-password', async (req, res) => {
+    try {
+        const { email } = req.body;
+        
+        if (!email) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Email is required' 
+            });
+        }
+        
+        const { data: result, error } = await db.resetSuperAdminPassword(email);
+        
+        if (error) {
+            return res.status(500).json({ 
+                success: false, 
+                error: error.message 
+            });
+        }
+        
+        if (!result) {
+            return res.status(404).json({ 
+                success: false, 
+                error: 'Super admin not found' 
+            });
+        }
+        
+        res.json({ 
+            success: true, 
+            data: {
+                message: 'Password reset successful. Check your email for the temporary password.',
+                tempPassword: result.tempPassword // In production, this would be sent via email
+            }
+        });
+    } catch (error) {
+        console.error('Reset password error:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to reset password' 
+        });
+    }
+});
+
+app.get('/api/superadmin/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const { data: admin, error } = await db.getSuperAdmin(id);
+        
+        if (error) {
+            return res.status(500).json({ 
+                success: false, 
+                error: error.message 
+            });
+        }
+        
+        if (!admin) {
+            return res.status(404).json({ 
+                success: false, 
+                error: 'Super admin not found' 
+            });
+        }
+        
+        res.json({ 
+            success: true, 
+            data: admin
+        });
+    } catch (error) {
+        console.error('Get super admin error:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to get super admin' 
+        });
+    }
+});
+
+app.put('/api/superadmin/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { email, username } = req.body;
+        
+        if (!email || !username) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Email and username are required' 
+            });
+        }
+        
+        const { data: admin, error } = await db.updateSuperAdmin(id, { email, username });
+        
+        if (error) {
+            return res.status(500).json({ 
+                success: false, 
+                error: error.message 
+            });
+        }
+        
+        if (!admin) {
+            return res.status(404).json({ 
+                success: false, 
+                error: 'Super admin not found' 
+            });
+        }
+        
+        res.json({ 
+            success: true, 
+            data: admin
+        });
+    } catch (error) {
+        console.error('Update super admin error:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to update super admin' 
+        });
+    }
+});
+
+app.delete('/api/superadmin/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const { data: admin, error } = await db.deleteSuperAdmin(id);
+        
+        if (error) {
+            return res.status(500).json({ 
+                success: false, 
+                error: error.message 
+            });
+        }
+        
+        if (!admin) {
+            return res.status(404).json({ 
+                success: false, 
+                error: 'Super admin not found' 
+            });
+        }
+        
+        res.json({ 
+            success: true, 
+            data: admin
+        });
+    } catch (error) {
+        console.error('Delete super admin error:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to delete super admin' 
+        });
+    }
+});
+
+// --- COMPANY MANAGEMENT ENDPOINTS ---
+app.post('/api/companies', async (req, res) => {
+    try {
+        const { name, licenseCount, modules, adminName, adminEmail, description, registrationId, address } = req.body;
+        
+        const { data: company, error: companyError } = await db.createCompany({
+            name,
+            licenseCount,
+            modules,
+            description,
+            registrationId,
+            address,
+            adminName,
+            adminEmail
+        });
+        
+        if (companyError) {
+            return res.status(500).json({ 
+                success: false, 
+                error: companyError.message 
+            });
+        }
+        
+        res.json({ 
+            success: true, 
+            data: { company: transformCompany(company) } 
+        });
+    } catch (error) {
+        console.error('Create company error:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to create company' 
+        });
+    }
+});
+
+app.get('/api/companies', async (req, res) => {
+    try {
+        const companies = await getCompanies();
+        res.json({ 
+            success: true, 
+            data: companies.map(transformCompany)
+        });
+    } catch (error) {
+        console.error('List companies error:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to fetch companies' 
+        });
+    }
+});
+
+app.get('/api/companies/:id', async (req, res) => {
+    try {
+        const companyId = req.params.id;
+        const { data: company, error } = await db.getCompanyById(companyId);
+        
+        if (error) {
+            return res.status(500).json({ 
+                success: false, 
+                error: error.message 
+            });
+        }
+        
+        if (!company) {
+            return res.status(404).json({ 
+                success: false, 
+                error: 'Company not found' 
+            });
+        }
+        
+        res.json({ 
+            success: true, 
+            data: transformCompany(company)
+        });
+    } catch (error) {
+        console.error('Get company error:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to fetch company' 
+        });
+    }
+});
+
+// Update company
+app.put('/api/companies/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updates = req.body;
+        
+        const { data: company, error } = await db.updateCompany(id, updates);
+        
+        if (error) {
+            return res.status(500).json({ 
+                success: false, 
+                error: error.message 
+            });
+        }
+        
+        if (!company) {
+            return res.status(404).json({ 
+                success: false, 
+                error: 'Company not found' 
+            });
+        }
+        
+        res.json({ 
+            success: true, 
+            data: transformCompany(company)
+        });
+    } catch (error) {
+        console.error('Update company error:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to update company' 
+        });
+    }
+});
+
+app.delete('/api/companies/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const { error } = await db.deleteCompany(id);
+        
+        if (error) {
+            return res.status(400).json({ 
+                success: false, 
+                error: error.message 
+            });
+        }
+        
+        res.json({ 
+            success: true, 
+            message: 'Company deleted successfully' 
+        });
+    } catch (error) {
+        console.error('Delete company error:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to delete company' 
+        });
+    }
+});
+
 // --- USER MANAGEMENT ENDPOINTS ---
 app.get('/api/users', async (req, res) => {
     try {
@@ -1228,70 +1587,6 @@ app.put('/api/leave/requests/:id', async (req, res) => {
         res.status(500).json({ 
             success: false, 
             error: 'Failed to update leave request' 
-        });
-    }
-});
-
-// --- COMPANY MANAGEMENT ENDPOINTS ---
-app.get('/api/companies', async (req, res) => {
-    try {
-        const { data, error } = await db.getCompanies();
-
-        if (error) {
-            return res.status(500).json({ 
-                success: false, 
-                error: 'Failed to fetch companies' 
-            });
-        }
-
-        res.json({ 
-            success: true, 
-            data 
-        });
-
-    } catch (error) {
-        console.error('Error fetching companies:', error);
-        res.status(500).json({ 
-            success: false, 
-            error: 'Failed to fetch companies' 
-        });
-    }
-});
-
-app.post('/api/companies', async (req, res) => {
-    try {
-        const companyData = req.body;
-
-        // Validation
-        if (!companyData.name) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'Company name is required' 
-            });
-        }
-
-        const { data, error } = await db.createCompany({
-            ...companyData,
-            created_at: new Date().toISOString()
-        });
-
-        if (error) {
-            return res.status(400).json({ 
-                success: false, 
-                error: error.message 
-            });
-        }
-
-        res.status(201).json({ 
-            success: true, 
-            data 
-        });
-
-    } catch (error) {
-        console.error('Error creating company:', error);
-        res.status(500).json({ 
-            success: false, 
-            error: 'Failed to create company' 
         });
     }
 });

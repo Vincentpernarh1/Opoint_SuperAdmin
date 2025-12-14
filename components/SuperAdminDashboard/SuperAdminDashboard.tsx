@@ -10,8 +10,10 @@ import {
   PlusIcon,
   ArrowRightIcon,
   ChartBarIcon,
-  Cog6ToothIcon
+  Cog6ToothIcon,
+  ShieldCheckIcon
 } from '../Icons/Icons';
+import Loading from '../Loading/Loading';
 import './SuperAdminDashboard.scss';
 
 interface SuperAdminDashboardProps {
@@ -50,7 +52,7 @@ const SuperAdminDashboard = ({ currentUser, theme }: SuperAdminDashboardProps) =
     const usedLicenses = companies.reduce((sum, c) => sum + c.usedLicenses, 0);
 
     if (loading) {
-        return <div className="loading">Loading dashboard...</div>;
+        return <Loading message="Loading dashboard..." size="large" fullScreen={true} />;
     }
 
     return (
@@ -186,6 +188,16 @@ const SuperAdminDashboard = ({ currentUser, theme }: SuperAdminDashboardProps) =
                             <div className="action-content">
                                 <h3>Manage Users</h3>
                                 <p>View and manage all users</p>
+                            </div>
+                        </Link>
+
+                        <Link to="/dashboard/superadmins" className="action-card">
+                            <div className="action-icon">
+                                <ShieldCheckIcon />
+                            </div>
+                            <div className="action-content">
+                                <h3>Super Admins</h3>
+                                <p>Manage super administrator accounts</p>
                             </div>
                         </Link>
 

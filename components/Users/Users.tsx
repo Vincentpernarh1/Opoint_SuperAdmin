@@ -15,10 +15,15 @@ import {
   UserCircleIcon
 } from '../Icons/Icons';
 import Notification from '../Notification/Notification';
+import Loading from '../Loading/Loading';
+import NotificationOverlay from '../NotificationOverlay/NotificationOverlay';
+import ConfirmationModal from '../ConfirmationModal/ConfirmationModal';
 import './Users.scss';
 
 const Users = ({ theme }: { theme: 'light' | 'dark' }) => {
   const [searchParams] = useSearchParams();
+  const role = searchParams.get('role');
+  const companyId = searchParams.get('companyId');
   const [users, setUsers] = useState<User[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,7 +32,16 @@ const Users = ({ theme }: { theme: 'light' | 'dark' }) => {
   const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('all');
   const [companyFilter, setCompanyFilter] = useState<string>('all');
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
-  const [notification, setNotification] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{
+    message: string;
+    type: 'success' | 'error';
+    isVisible: boolean;
+  } | null>(null);
+  const [confirmationModal, setConfirmationModal] = useState<{
+    isVisible: boolean;
+    message: string;
+    onConfirm: () => void;
+  } | null>(null);
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -50,24 +64,40 @@ const Users = ({ theme }: { theme: 'light' | 'dark' }) => {
   const handleBulkActivate = async () => {
     try {
       await Promise.all(Array.from(selectedUsers).map(id => api.updateUser(id, { status: UserStatus.ACTIVE })));
-      setNotification(`Activated ${selectedUsers.size} users`);
+      setNotification({
+        message: `Activated ${selectedUsers.size} users`,
+        type: 'success',
+        isVisible: true
+      });
       setSelectedUsers(new Set());
       loadData();
     } catch (error) {
       console.error('Failed to activate users:', error);
-      setNotification('Failed to activate users');
+      setNotification({
+        message: 'Failed to activate users',
+        type: 'error',
+        isVisible: true
+      });
     }
   };
 
   const handleBulkDeactivate = async () => {
     try {
       await Promise.all(Array.from(selectedUsers).map(id => api.updateUser(id, { status: UserStatus.INACTIVE })));
-      setNotification(`Deactivated ${selectedUsers.size} users`);
+      setNotification({
+        message: `Deactivated ${selectedUsers.size} users`,
+        type: 'success',
+        isVisible: true
+      });
       setSelectedUsers(new Set());
       loadData();
     } catch (error) {
       console.error('Failed to deactivate users:', error);
-      setNotification('Failed to deactivate users');
+      setNotification({
+        message: 'Failed to deactivate users',
+        type: 'error',
+        isVisible: true
+      });
     }
   };
 
@@ -90,44 +120,97 @@ const Users = ({ theme }: { theme: 'light' | 'dark' }) => {
 
   const loadData = async () => {
     try {
-      const [usersData, companiesData] = await Promise.all([
-        api.getUsers(),
-        api.getCompanies()
-      ]);
-      setUsers(usersData);
-      setCompanies(companiesData);
+      if (role === 'admin' && companyId) {
+        // Load admin details from company
+        const company = await api.getCompany(companyId);
+        const adminUser: User = {
+          id: `admin-${company.id}`,
+          name: company.adminName || 'N/A',
+          email: company.adminEmail || 'N/A',
+          role: UserRole.ADMIN,
+          status: UserStatus.ACTIVE,
+          avatarUrl: '',
+          team: 'Management',
+          companyId: company.id,
+          basicSalary: 0,
+          hireDate: new Date(),
+          createdAt: company.createdAt,
+          updatedAt: company.updatedAt || new Date()
+        };
+        setUsers([adminUser]);
+        setCompanies([company]);
+      } else {
+        const [usersData, companiesData] = await Promise.all([
+          api.getUsers(),
+          api.getCompanies()
+        ]);
+        setUsers(usersData);
+        setCompanies(companiesData);
+      }
     } catch (error) {
-      setNotification('Failed to load users');
+      setNotification({
+        message: 'Failed to load data',
+        type: 'error',
+        isVisible: true
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleStatusToggle = async (user: User) => {
-    const newStatus = user.status === UserStatus.ACTIVE ? UserStatus.INACTIVE : UserStatus.ACTIVE;
-    try {
-      await api.updateUser(user.id, { status: newStatus });
-      setUsers(prev => prev.map(u =>
-        u.id === user.id ? { ...u, status: newStatus, updatedAt: new Date() } : u
-      ));
-      setNotification(`User "${user.name}" ${newStatus.toLowerCase()}`);
-    } catch (error) {
-      setNotification('Failed to update user status');
-    }
+  const handleStatusToggle = (user: User) => {
+    const isActivating = user.status === UserStatus.INACTIVE;
+    const action = isActivating ? 'activate' : 'deactivate';
+    setConfirmationModal({
+      isVisible: true,
+      message: `Are you sure you want to ${action} "${user.name}"?`,
+      onConfirm: async () => {
+        const newStatus = isActivating ? UserStatus.ACTIVE : UserStatus.INACTIVE;
+        try {
+          await api.updateUser(user.id, { status: newStatus });
+          setUsers(prev => prev.map(u =>
+            u.id === user.id ? { ...u, status: newStatus, updatedAt: new Date() } : u
+          ));
+          setNotification({
+            message: `User "${user.name}" ${newStatus.toLowerCase()}`,
+            type: 'success',
+            isVisible: true
+          });
+        } catch (error) {
+          setNotification({
+            message: 'Failed to update user status',
+            type: 'error',
+            isVisible: true
+          });
+        }
+        setConfirmationModal(null);
+      }
+    });
   };
 
-  const handleDelete = async (user: User) => {
-    if (!window.confirm(`Are you sure you want to delete "${user.name}"? This action cannot be undone.`)) {
-      return;
-    }
-
-    try {
-      await api.deleteUser(user.id);
-      setUsers(prev => prev.filter(u => u.id !== user.id));
-      setNotification(`User "${user.name}" deleted successfully`);
-    } catch (error) {
-      setNotification('Failed to delete user');
-    }
+  const handleDelete = (user: User) => {
+    setConfirmationModal({
+      isVisible: true,
+      message: `Are you sure you want to delete "${user.name}"? This action cannot be undone.`,
+      onConfirm: async () => {
+        try {
+          await api.deleteUser(user.id);
+          setUsers(prev => prev.filter(u => u.id !== user.id));
+          setNotification({
+            message: `User "${user.name}" deleted successfully`,
+            type: 'success',
+            isVisible: true
+          });
+        } catch (error) {
+          setNotification({
+            message: 'Failed to delete user',
+            type: 'error',
+            isVisible: true
+          });
+        }
+        setConfirmationModal(null);
+      }
+    });
   };
 
   const getCompanyName = (companyId?: string) => {
@@ -178,7 +261,7 @@ const Users = ({ theme }: { theme: 'light' | 'dark' }) => {
   });
 
   if (loading) {
-    return <div className="loading">Loading users...</div>;
+    return <Loading message="Loading users..." size="large" fullScreen={true} />;
   }
 
   const isFilteredMode = searchParams.get('companyId') && searchParams.get('role') === 'admin';
@@ -186,13 +269,21 @@ const Users = ({ theme }: { theme: 'light' | 'dark' }) => {
 
   return (
     <>
-      {notification && (
-        <Notification
-          message={notification}
-          type="success"
-          onClose={() => setNotification(null)}
-        />
-      )}
+      <NotificationOverlay
+        message={notification?.message || ''}
+        type={notification?.type || 'success'}
+        isVisible={notification?.isVisible || false}
+        onClose={() => setNotification(null)}
+        theme={theme}
+      />
+
+      <ConfirmationModal
+        isVisible={confirmationModal?.isVisible || false}
+        message={confirmationModal?.message || ''}
+        onConfirm={confirmationModal?.onConfirm || (() => {})}
+        onCancel={() => setConfirmationModal(null)}
+        theme={theme}
+      />
 
       <div className={`users-page ${theme}`}>
         <div className="page-header">

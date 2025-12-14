@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { LogoIcon, MailIcon, LockIcon } from '../Icons/Icons';
+import { LogoIcon, MailIcon, LockIcon, KeyIcon } from '../Icons/Icons';
+import { api } from '../../services/api';
 import './SuperAdminLogin.scss';
 
 interface SuperAdminLoginProps {
@@ -11,6 +12,11 @@ const SuperAdminLogin = ({ onLogin }: SuperAdminLoginProps) => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [failedAttempts, setFailedAttempts] = useState(0);
+    const [showResetPassword, setShowResetPassword] = useState(false);
+    const [resetEmail, setResetEmail] = useState('');
+    const [isResetting, setIsResetting] = useState(false);
+    const [resetMessage, setResetMessage] = useState<string | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -21,12 +27,41 @@ const SuperAdminLogin = ({ onLogin }: SuperAdminLoginProps) => {
         try {
             const success = await onLogin(email, password);
             if (!success) {
-                setError('Invalid Super Admin credentials.');
+                const newFailedAttempts = failedAttempts + 1;
+                setFailedAttempts(newFailedAttempts);
+                setError(`Invalid Super Admin credentials. ${5 - newFailedAttempts} attempts remaining.`);
+                
+                if (newFailedAttempts >= 5) {
+                    setShowResetPassword(true);
+                    setError('Too many failed attempts. Please reset your password.');
+                }
+            } else {
+                // Reset failed attempts on successful login
+                setFailedAttempts(0);
+                setShowResetPassword(false);
             }
         } catch (error) {
             setError('Login failed. Please try again.');
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleResetPassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (isResetting) return;
+        setResetMessage(null);
+        setIsResetting(true);
+
+        try {
+            const result = await api.resetSuperAdminPassword(resetEmail || email);
+            setResetMessage(`Password reset successful! Your temporary password is: ${result.tempPassword}`);
+            setShowResetPassword(false);
+            setFailedAttempts(0);
+        } catch (error) {
+            setResetMessage(error instanceof Error ? error.message : 'Failed to reset password');
+        } finally {
+            setIsResetting(false);
         }
     };
 
@@ -108,6 +143,19 @@ const SuperAdminLogin = ({ onLogin }: SuperAdminLoginProps) => {
                         </button>
                     </div>
 
+                    {showResetPassword && (
+                        <div className="reset-password-section">
+                            <button
+                                type="button"
+                                onClick={() => setShowResetPassword(true)}
+                                className="reset-password-button"
+                            >
+                                <KeyIcon className="reset-icon" />
+                                Reset Password
+                            </button>
+                        </div>
+                    )}
+
                     <div className="demo-info">
                         <p>
                             Demo credentials: <br />
@@ -116,6 +164,65 @@ const SuperAdminLogin = ({ onLogin }: SuperAdminLoginProps) => {
                     </div>
                 </form>
                 </div>
+
+                {showResetPassword && (
+                    <div className="reset-password-modal">
+                        <div className="reset-password-content">
+                            <h3 className="reset-title">Reset Password</h3>
+                            <p className="reset-description">
+                                Enter your email address and we'll send you a temporary password.
+                            </p>
+                            
+                            <form onSubmit={handleResetPassword} className="reset-form">
+                                <div className="input-group">
+                                    <label htmlFor="resetEmail" className="sr-only">
+                                        Email Address
+                                    </label>
+                                    <div className="input-icon">
+                                        <MailIcon />
+                                    </div>
+                                    <input
+                                        id="resetEmail"
+                                        name="resetEmail"
+                                        type="email"
+                                        required
+                                        className="login-input"
+                                        placeholder="Enter your email"
+                                        value={resetEmail || email}
+                                        onChange={(e) => setResetEmail(e.target.value)}
+                                    />
+                                </div>
+
+                                {resetMessage && (
+                                    <div className={`reset-message ${resetMessage.includes('successful') ? 'success' : 'error'}`}>
+                                        <p>{resetMessage}</p>
+                                    </div>
+                                )}
+
+                                <div className="reset-actions">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setShowResetPassword(false);
+                                            setResetMessage(null);
+                                        }}
+                                        className="reset-cancel-button"
+                                        disabled={isResetting}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={isResetting}
+                                        className="reset-submit-button"
+                                    >
+                                        {isResetting ? 'Resetting...' : 'Reset Password'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

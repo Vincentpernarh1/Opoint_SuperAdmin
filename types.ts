@@ -34,8 +34,10 @@ export interface Company {
   description?: string;
   registrationId?: string;
   address?: string;
+  adminName?: string;
+  adminEmail?: string;
   createdAt: Date;
-  updatedAt: Date;
+  updatedAt: Date | null;
   adminId?: string;
 }
 
@@ -194,4 +196,14 @@ export interface CompanySettings {
   requireApprovalForLeaves: boolean;
   autoApproveExpensesUnder: number;
   customModules: Record<string, boolean>;
+}
+
+export interface SuperAdmin {
+  id: number;
+  email: string;
+  username: string;
+  password?: string; // Only included when creating/updating
+  date_created: Date;
+  last_access_time: Date | null;
+  logs: string | null;
 }

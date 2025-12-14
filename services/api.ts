@@ -1,4 +1,4 @@
-import type { Company, NewCompanyData, User, AuditLog } from '../types';
+import type { Company, NewCompanyData, User, AuditLog, SuperAdmin } from '../types';
 import { UserRole, CompanyStatus, UserStatus } from '../types';
 import { COMPANIES, USERS } from '../constants';
 
@@ -9,87 +9,108 @@ class ApiService {
 
   // Company CRUD operations
   async getCompanies(): Promise<Company[]> {
-    return new Promise((resolve) => {
-      setTimeout(() => resolve([...this.companies]), 300);
-    });
+    const response = await fetch('/api/companies');
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch companies');
+    }
+    
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to fetch companies');
+    }
+    
+    return result.data;
   }
 
-  async getCompany(id: string): Promise<Company | null> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const company = this.companies.find(c => c.id === id);
-        resolve(company || null);
-      }, 300);
-    });
+  async getCompany(id: string): Promise<Company> {
+    const response = await fetch(`/api/companies/${id}`);
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch company');
+    }
+    
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to fetch company');
+    }
+    
+    return result.data;
   }
 
   async createCompany(data: NewCompanyData): Promise<Company> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const company: Company = {
-          id: Math.random().toString(36).substr(2, 9),
-          name: data.name,
-          licenseCount: data.licenseCount,
-          usedLicenses: 0,
-          status: CompanyStatus.ACTIVE,
-          modules: data.modules,
-          description: data.description,
-          registrationId: data.registrationId,
-          address: data.address,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-        this.companies.push(company);
-        this.logAudit('create', 'company', company.id, 'superadmin', { ...company });
-        resolve(company);
-      }, 500);
+    const response = await fetch('/api/companies', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
     });
+    
+    if (!response.ok) {
+      throw new Error('Failed to create company');
+    }
+    
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to create company');
+    }
+    
+    return result.data;
   }
 
-  async updateCompany(id: string, updates: Partial<Company>): Promise<Company | null> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const index = this.companies.findIndex(c => c.id === id);
-        if (index === -1) {
-          resolve(null);
-          return;
-        }
-
-        const oldCompany = { ...this.companies[index] };
-        this.companies[index] = {
-          ...this.companies[index],
-          ...updates,
-          updatedAt: new Date()
-        };
-
-        this.logAudit('update', 'company', id, 'superadmin', { old: oldCompany, new: this.companies[index] });
-        resolve(this.companies[index]);
-      }, 500);
+  async updateCompany(id: string, updates: Partial<Company>): Promise<Company> {
+    const response = await fetch(`/api/companies/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updates),
     });
+
+    if (!response.ok) {
+      throw new Error('Failed to update company');
+    }
+
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to update company');
+    }
+
+    return result.data;
   }
 
   async deleteCompany(id: string): Promise<boolean> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const index = this.companies.findIndex(c => c.id === id);
-        if (index === -1) {
-          resolve(false);
-          return;
-        }
-
-        const company = this.companies[index];
-        this.companies.splice(index, 1);
-        this.logAudit('delete', 'company', id, 'superadmin', { deleted: company });
-        resolve(true);
-      }, 500);
+    const response = await fetch(`/api/companies/${id}`, {
+      method: 'DELETE',
     });
+
+    if (!response.ok) {
+      throw new Error('Failed to delete company');
+    }
+
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to delete company');
+    }
+
+    return true;
   }
 
   // User CRUD operations
   async getUsers(): Promise<User[]> {
-    return new Promise((resolve) => {
-      setTimeout(() => resolve([...this.users]), 300);
-    });
+    const response = await fetch('/api/users');
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch users');
+    }
+    
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to fetch users');
+    }
+    
+    return result.data;
   }
 
   async getUser(id: string): Promise<User | null> {
@@ -166,27 +187,25 @@ class ApiService {
   }
 
   // Legacy methods for backward compatibility
-  async createCompanyAndAdmin(data: NewCompanyData): Promise<{ company: Company; user: User }> {
-    return new Promise(async (resolve) => {
-      const company = await this.createCompany(data);
-      const user = await this.createUser({
-        name: data.adminName,
-        email: data.adminEmail,
-        role: UserRole.ADMIN,
-        status: UserStatus.ACTIVE,
-        avatarUrl: '',
-        team: 'Admin',
-        companyId: company.id,
-        basicSalary: 0,
-        hireDate: new Date(),
-      });
-
-      // Update company with admin ID
-      company.adminId = user.id;
-      await this.updateCompany(company.id, { adminId: user.id });
-
-      resolve({ company, user });
+  async createCompanyAndAdmin(data: NewCompanyData): Promise<{ company: Company }> {
+    const response = await fetch('/api/companies', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
     });
+    
+    if (!response.ok) {
+      throw new Error('Failed to create company and admin');
+    }
+    
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to create company and admin');
+    }
+    
+    return result.data;
   }
 
   // Audit logging
@@ -216,6 +235,133 @@ class ApiService {
         resolve(logs.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()));
       }, 300);
     });
+  }
+
+  // SuperAdmin CRUD operations
+  async getSuperAdmins(): Promise<SuperAdmin[]> {
+    const response = await fetch('/api/superadmin/list');
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch super admins');
+    }
+    
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to fetch super admins');
+    }
+    
+    return result.data.map((admin: any) => ({
+      ...admin,
+      date_created: new Date(admin.date_created),
+      last_access_time: admin.last_access_time ? new Date(admin.last_access_time) : null,
+    }));
+  }
+
+  async createSuperAdmin(data: { email: string; username: string; password: string }): Promise<SuperAdmin> {
+    const response = await fetch('/api/superadmin/create', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to create super admin');
+    }
+    
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to create super admin');
+    }
+    
+    return {
+      ...result.data,
+      date_created: new Date(result.data.date_created),
+      last_access_time: result.data.last_access_time ? new Date(result.data.last_access_time) : null,
+    };
+  }
+
+  async resetSuperAdminPassword(email: string): Promise<{ message: string; tempPassword: string }> {
+    const response = await fetch('/api/superadmin/reset-password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to reset password');
+    }
+    
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to reset password');
+    }
+    
+    return result.data;
+  }
+
+  async getSuperAdmin(id: string): Promise<SuperAdmin> {
+    const response = await fetch(`/api/superadmin/${id}`);
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch super admin');
+    }
+    
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to fetch super admin');
+    }
+    
+    return {
+      ...result.data,
+      date_created: new Date(result.data.date_created),
+      last_access_time: result.data.last_access_time ? new Date(result.data.last_access_time) : null,
+    };
+  }
+
+  async updateSuperAdmin(id: string, data: { email: string; username: string }): Promise<SuperAdmin> {
+    const response = await fetch(`/api/superadmin/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to update super admin');
+    }
+    
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to update super admin');
+    }
+    
+    return {
+      ...result.data,
+      date_created: new Date(result.data.date_created),
+      last_access_time: result.data.last_access_time ? new Date(result.data.last_access_time) : null,
+    };
+  }
+
+  async deleteSuperAdmin(id: string): Promise<{ id: string; email: string; username: string }> {
+    const response = await fetch(`/api/superadmin/${id}`, {
+      method: 'DELETE',
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to delete super admin');
+    }
+    
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to delete super admin');
+    }
+    
+    return result.data;
   }
 }
 

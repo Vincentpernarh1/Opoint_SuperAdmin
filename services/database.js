@@ -64,7 +64,7 @@ export const db = {
         if (!client) return { data: [], error: 'Database not configured' };
         
         const { data, error } = await client
-            .from('P360-Opoint_User')
+            .from('opoint_users')
             .select('*')
             .order('created_at', { ascending: false });
         
@@ -76,7 +76,7 @@ export const db = {
         if (!client) return { data: null, error: 'Database not configured' };
         
         const { data, error } = await client
-            .from('P360-Opoint_User')
+            .from('opoint_users')
             .select('*')
             .eq('id', userId)
             .single();
@@ -89,7 +89,7 @@ export const db = {
         if (!client) return { data: null, error: 'Database not configured' };
         
         const { data, error } = await client
-            .from('P360-Opoint_User')
+            .from('opoint_users')
             .insert([userData])
             .select()
             .single();
@@ -102,7 +102,7 @@ export const db = {
         if (!client) return { data: null, error: 'Database not configured' };
         
         const { data, error } = await client
-            .from('P360-Opoint_User')
+            .from('opoint_users')
             .update(updates)
             .eq('id', userId)
             .select()
@@ -116,7 +116,7 @@ export const db = {
         if (!client) return { data: null, error: 'Database not configured' };
         
         const { data, error } = await client
-            .from('P360-Opoint_User')
+            .from('opoint_users')
             .delete()
             .eq('id', userId);
         
@@ -129,22 +129,47 @@ export const db = {
         if (!client) return { data: [], error: 'Database not configured' };
         
         const { data, error } = await client
-            .from('P360-Opoint_Companies')
+            .from('opoint_companies')
             .select('*')
             .order('created_at', { ascending: false });
         
         return { data, error };
     },
 
-    async createCompany(companyData) {
+    async updateCompany(companyId, updates) {
+        const client = getSupabaseClient();
+        if (!client) return { data: null, error: 'Database not configured' };
+        
+        // Transform camelCase to snake_case for database
+        const dataToUpdate = {
+            ...(updates.name !== undefined && { name: updates.name }),
+            ...(updates.licenseCount !== undefined && { license_count: updates.licenseCount }),
+            ...(updates.registrationId !== undefined && { registration_id: updates.registrationId }),
+            ...(updates.address !== undefined && { address: updates.address }),
+            ...(updates.modules !== undefined && { modules: updates.modules }),
+            ...(updates.status !== undefined && { status: updates.status }),
+            ...(updates.description !== undefined && { description: updates.description }),
+            updated_at: new Date().toISOString()
+        };
+        
+        const { data, error } = await client
+            .from('opoint_companies')
+            .update(dataToUpdate)
+            .eq('id', companyId)
+            .select()
+            .single();
+        
+        return { data, error };
+    },
+
+    async deleteCompany(companyId) {
         const client = getSupabaseClient();
         if (!client) return { data: null, error: 'Database not configured' };
         
         const { data, error } = await client
-            .from('P360-Opoint_Companies')
-            .insert([companyData])
-            .select()
-            .single();
+            .from('opoint_companies')
+            .delete()
+            .eq('id', companyId);
         
         return { data, error };
     },
@@ -155,7 +180,7 @@ export const db = {
         if (!client) return { data: null, error: 'Database not configured' };
         
         const { data, error } = await client
-            .from('P360-Opoint_PayrollHistory')
+            .from('opoint_payroll_history')
             .insert([payrollData])
             .select()
             .single();
@@ -168,8 +193,8 @@ export const db = {
         if (!client) return { data: [], error: 'Database not configured' };
         
         let query = client
-            .from('P360-Opoint_PayrollHistory')
-            .select('*, P360-Opoint_User(name, email, mobile_money_number)');
+            .from('opoint_payroll_history')
+            .select('*, opoint_users(name, email, mobile_money_number)');
 
         if (filters.userId) {
             query = query.eq('user_id', filters.userId);
@@ -194,7 +219,7 @@ export const db = {
         if (!client) return { data: null, error: 'Database not configured' };
         
         const { data, error } = await client
-            .from('P360-Opoint_PayrollHistory')
+            .from('opoint_payroll_history')
             .update({ status, updated_at: new Date().toISOString() })
             .eq('transaction_id', transactionId)
             .select()
@@ -363,6 +388,167 @@ export const db = {
             .from('opoint_superadmin')
             .select('id, email, username, date_created, last_access_time')
             .order('date_created', { ascending: false });
+        
+        return { data, error };
+    },
+
+    async resetSuperAdminPassword(email) {
+        const client = getSupabaseClient();
+        if (!client) return { data: null, error: 'Database not configured' };
+        
+        // Generate a temporary password
+        const tempPassword = Math.random().toString(36).slice(-12) + 'Temp!';
+        const hashedPassword = await bcrypt.hash(tempPassword, 10);
+        
+        const { data, error } = await client
+            .from('opoint_superadmin')
+            .update({ 
+                password: hashedPassword,
+                logs: `Password reset on ${new Date().toISOString()}`
+            })
+            .eq('email', email)
+            .select('id, email, username')
+            .single();
+        
+        if (error) {
+            return { data: null, error };
+        }
+        
+        return { data: { ...data, tempPassword }, error: null };
+    },
+
+    async getSuperAdmin(id) {
+        const client = getSupabaseClient();
+        if (!client) return { data: null, error: 'Database not configured' };
+        
+        const { data, error } = await client
+            .from('opoint_superadmin')
+            .select('id, email, username, date_created, last_access_time')
+            .eq('id', id)
+            .single();
+        
+        return { data, error };
+    },
+
+    async updateSuperAdmin(id, updateData) {
+        const client = getSupabaseClient();
+        if (!client) return { data: null, error: 'Database not configured' };
+        
+        const { data, error } = await client
+            .from('opoint_superadmin')
+            .update({
+                ...updateData,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', id)
+            .select('id, email, username, date_created, last_access_time')
+            .single();
+        
+        return { data, error };
+    },
+
+    async deleteSuperAdmin(id) {
+        const client = getSupabaseClient();
+        if (!client) return { data: null, error: 'Database not configured' };
+        
+        const { data, error } = await client
+            .from('opoint_superadmin')
+            .delete()
+            .eq('id', id)
+            .select('id, email, username')
+            .single();
+        
+        return { data, error };
+    },
+
+    // Company functions
+    async createCompany(companyData) {
+        const client = getSupabaseClient();
+        if (!client) return { data: null, error: 'Database not configured' };
+        
+        const { data, error } = await client
+            .from('opoint_companies')
+            .insert({
+                name: companyData.name,
+                license_count: companyData.licenseCount,
+                used_licenses: 0,
+                status: 'Active',
+                modules: companyData.modules,
+                description: companyData.description || null,
+                registration_id: companyData.registrationId || null,
+                address: companyData.address || null,
+                admin_name: companyData.adminName,
+                admin_email: companyData.adminEmail,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                admin_id: null
+            })
+            .select()
+            .single();
+        
+        return { data, error };
+    },
+
+    async getAllCompanies() {
+        const client = getSupabaseClient();
+        if (!client) return { data: null, error: 'Database not configured' };
+        
+        const { data, error } = await client
+            .from('opoint_companies')
+            .select('*')
+            .order('created_at', { ascending: false });
+        
+        return { data, error };
+    },
+
+    async getCompanyById(companyId) {
+        const client = getSupabaseClient();
+        if (!client) return { data: null, error: 'Database not configured' };
+        
+        const { data, error } = await client
+            .from('opoint_companies')
+            .select('*')
+            .eq('id', companyId)
+            .single();
+        
+        return { data, error };
+    },
+
+    async updateCompanyAdminId(companyId, adminId) {
+        const client = getSupabaseClient();
+        if (!client) return { data: null, error: 'Database not configured' };
+        
+        const { data, error } = await client
+            .from('opoint_companies')
+            .update({ admin_id: adminId, updated_at: new Date().toISOString() })
+            .eq('id', companyId)
+            .select()
+            .single();
+        
+        return { data, error };
+    },
+
+    async createUser(userData) {
+        const client = getSupabaseClient();
+        if (!client) return { data: null, error: 'Database not configured' };
+        
+        const { data, error } = await client
+            .from('P360-Opoint_User')
+            .insert({
+                name: userData.name,
+                email: userData.email,
+                role: userData.role,
+                status: userData.status,
+                avatar_url: userData.avatarUrl,
+                team: userData.team,
+                company_id: userData.companyId,
+                basic_salary: userData.basicSalary,
+                hire_date: userData.hireDate.toISOString(),
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            })
+            .select()
+            .single();
         
         return { data, error };
     },

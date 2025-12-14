@@ -11,7 +11,8 @@ import {
   MoonIcon,
   SunIcon,
   UserCircleIcon,
-  LogOutIcon
+  LogOutIcon,
+  ShieldCheckIcon
 } from '../Icons/Icons';
 import './Sidebar.scss';
 
@@ -31,6 +32,7 @@ const Sidebar = ({ currentUser, isCollapsed, onToggleCollapse, theme, onToggleTh
     { path: '/dashboard', label: 'Dashboard', icon: HomeIcon },
     { path: '/dashboard/companies', label: 'Companies', icon: BuildingOfficeIcon },
     { path: '/dashboard/users', label: 'Users', icon: UsersIcon },
+    { path: '/dashboard/superadmins', label: 'Super Admins', icon: ShieldCheckIcon },
     { path: '/dashboard/settings', label: 'Settings', icon: Cog6ToothIcon },
   ];
 
@@ -38,7 +40,7 @@ const Sidebar = ({ currentUser, isCollapsed, onToggleCollapse, theme, onToggleTh
     <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''} ${theme}`}>
       <div className="sidebar-header">
         <div className="logo-section">
-          {!isCollapsed && <span className="logo-text">VPENA</span>}
+          {!isCollapsed && <span className="logo-text">VPENA OPOINT</span>}
           <button onClick={onToggleCollapse} className="collapse-btn">
             {isCollapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
           </button>

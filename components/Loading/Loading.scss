@@ -1,0 +1,202 @@
+@use '../../constants.scss';
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+
+  &.loading-fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.9);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+  }
+
+  &.loading-small {
+    .loading-spinner {
+      width: 2rem;
+      height: 2rem;
+    }
+
+    .loading-message {
+      font-size: 0.875rem;
+    }
+  }
+
+  &.loading-medium {
+    .loading-spinner {
+      width: 3rem;
+      height: 3rem;
+    }
+
+    .loading-message {
+      font-size: 1rem;
+    }
+  }
+
+  &.loading-large {
+    .loading-spinner {
+      width: 4rem;
+      height: 4rem;
+    }
+
+    .loading-message {
+      font-size: 1.125rem;
+    }
+  }
+}
+
+.loading-container {
+  &.loading-colors-1 {
+    --loading-color-count: 1;
+  }
+  &.loading-colors-2 {
+    --loading-color-count: 2;
+  }
+  &.loading-colors-3 {
+    --loading-color-count: 3;
+  }
+  &.loading-colors-4 {
+    --loading-color-count: 4;
+  }
+  &.loading-colors-5 {
+    --loading-color-count: 5;
+  }
+}
+
+.loading-spinner {
+  position: relative;
+  width: 3rem;
+  height: 3rem;
+  animation: spin 1.5s linear infinite;
+
+  .loading-segment {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+    opacity: 0.7;
+
+    &.loading-segment-0 {
+      transform: rotate(0deg);
+      animation: fade 2s ease-in-out infinite;
+      animation-delay: 0s;
+      background-color: #3b82f6;
+    }
+    &.loading-segment-1 {
+      transform: rotate(72deg);
+      animation: fade 2s ease-in-out infinite;
+      animation-delay: 0.2s;
+      background-color: #ef4444;
+    }
+    &.loading-segment-2 {
+      transform: rotate(144deg);
+      animation: fade 2s ease-in-out infinite;
+      animation-delay: 0.4s;
+      background-color: #10b981;
+    }
+    &.loading-segment-3 {
+      transform: rotate(216deg);
+      animation: fade 2s ease-in-out infinite;
+      animation-delay: 0.6s;
+      background-color: #f59e0b;
+    }
+    &.loading-segment-4 {
+      transform: rotate(288deg);
+      animation: fade 2s ease-in-out infinite;
+      animation-delay: 0.8s;
+      background-color: #8b5cf6;
+    }
+  }
+}
+
+.loading-message {
+  color: #6b7280;
+  font-weight: 500;
+  text-align: center;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fade {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+// Alternative spinner styles for different effects
+.loading-spinner.alternative {
+  .loading-segment {
+    border: 3px solid transparent;
+    border-top: 3px solid var(--color);
+    animation: spin-segment 1s linear infinite;
+    animation-delay: calc(var(--index) * 0.1s);
+
+    &::before {
+      display: none;
+    }
+  }
+}
+
+@keyframes spin-segment {
+  0% {
+    transform: rotate(calc(360deg / var(--total) * var(--index))) rotate(0deg);
+  }
+  100% {
+    transform: rotate(calc(360deg / var(--total) * var(--index))) rotate(360deg);
+  }
+}
+
+// Dots animation variant
+.loading-dots {
+  display: flex;
+  gap: 0.5rem;
+
+  .loading-dot {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 50%;
+    background-color: var(--color);
+    animation: bounce 1.4s ease-in-out infinite both;
+    animation-delay: calc(var(--index) * 0.1s);
+  }
+}
+
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+    opacity: 0.3;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

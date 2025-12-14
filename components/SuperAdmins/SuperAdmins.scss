@@ -1,0 +1,338 @@
+.super-admins-page {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.super-admins-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+
+  .header-content {
+    display: flex;
+    align-items: flex-start;
+
+    .super-admins-header-icon {
+      height: 2rem;
+      width: 2rem;
+      margin-right: 1rem;
+      color: #4f46e5;
+      margin-top: 0.25rem;
+    }
+
+    .super-admins-title {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #111827;
+      margin: 0 0 0.5rem 0;
+    }
+
+    .super-admins-subtitle {
+      color: #6b7280;
+      margin: 0;
+    }
+  }
+
+  .add-super-admin-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: #4f46e5;
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+
+    &:hover {
+      background: #4338ca;
+    }
+
+    .add-icon {
+      height: 1rem;
+      width: 1rem;
+    }
+  }
+}
+
+.super-admins-controls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+
+  .search-container {
+    position: relative;
+    flex: 1;
+    max-width: 400px;
+
+    .search-icon {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      height: 1rem;
+      width: 1rem;
+      color: #6b7280;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+
+      &:focus {
+        outline: none;
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+      }
+    }
+  }
+}
+
+.super-admins-table-container {
+  background: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.super-admins-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  thead {
+    background: #f9fafb;
+
+    th {
+      padding: 1rem;
+      text-align: left;
+      font-weight: 600;
+      color: #374151;
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid #e5e7eb;
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid #e5e7eb;
+
+      &:hover {
+        background: #f9fafb;
+      }
+
+      td {
+        padding: 1rem;
+        vertical-align: middle;
+
+        .admin-info {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+
+          .admin-avatar {
+            height: 2rem;
+            width: 2rem;
+            color: #6b7280;
+          }
+
+          .admin-username {
+            font-weight: 500;
+            color: #111827;
+          }
+        }
+
+        .admin-email {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          color: #6b7280;
+
+          .email-icon {
+            height: 1rem;
+            width: 1rem;
+          }
+        }
+
+        .admin-date {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          color: #6b7280;
+
+          .date-icon {
+            height: 1rem;
+            width: 1rem;
+          }
+        }
+
+        .no-access {
+          color: #9ca3af;
+          font-style: italic;
+        }
+
+        .actions {
+          display: flex;
+          gap: 0.5rem;
+
+          .action-btn {
+            padding: 0.5rem;
+            border: none;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            svg {
+              height: 1rem;
+              width: 1rem;
+            }
+
+            &.view-btn {
+              background: #dbeafe;
+              color: #1e40af;
+
+              &:hover {
+                background: #bfdbfe;
+              }
+            }
+
+            &.edit-btn {
+              background: #fef3c7;
+              color: #92400e;
+
+              &:hover {
+                background: #fde68a;
+              }
+            }
+
+            &.delete-btn {
+              background: #fee2e2;
+              color: #dc2626;
+
+              &:hover {
+                background: #fecaca;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #6b7280;
+
+  .empty-icon {
+    height: 4rem;
+    width: 4rem;
+    margin: 0 auto 1rem;
+    color: #d1d5db;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #374151;
+    margin: 0 0 0.5rem 0;
+  }
+
+  p {
+    margin: 0 0 2rem 0;
+  }
+
+  .add-first-admin-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: #4f46e5;
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+
+    &:hover {
+      background: #4338ca;
+    }
+
+    .add-icon {
+      height: 1rem;
+      width: 1rem;
+    }
+  }
+}
+
+// Dark theme support
+.super-admins-page.dark {
+  .super-admins-title {
+    color: #f9fafb;
+  }
+
+  .super-admins-subtitle {
+    color: #9ca3af;
+  }
+
+  .super-admins-table-container {
+    background: #1f2937;
+  }
+
+  .super-admins-table {
+    thead {
+      background: #111827;
+
+      th {
+        color: #d1d5db;
+        border-bottom-color: #374151;
+      }
+    }
+
+    tbody {
+      tr {
+        border-bottom-color: #374151;
+
+        &:hover {
+          background: #111827;
+        }
+
+        td {
+          .admin-username {
+            color: #f9fafb;
+          }
+
+          .admin-email,
+          .admin-date {
+            color: #9ca3af;
+          }
+
+          .no-access {
+            color: #6b7280;
+          }
+        }
+      }
+    }
+  }
+
+  .empty-state {
+    color: #9ca3af;
+
+    h3 {
+      color: #d1d5db;
+    }
+  }
+}

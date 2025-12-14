@@ -4,6 +4,7 @@ import type { NewCompanyData } from '../../types';
 import { api } from '../../services/api';
 import { UserCircleIcon, MailIcon, ArrowLeftIcon, BuildingOfficeIcon } from '../Icons/Icons';
 import Notification from '../Notification/Notification';
+import Loading from '../Loading/Loading';
 import './AddCompanyPage.scss';
 
 const AddCompanyPage = () => {
@@ -42,8 +43,9 @@ const AddCompanyPage = () => {
 
         try {
             const result = await api.createCompanyAndAdmin(data);
-            setSuccess(`Company "${result.company.name}" and admin "${result.user.name}" onboarded successfully!`);
-            setTimeout(() => navigate('/superadmin'), 2000);
+            const successMessage = `Company "${result.company.name}" onboarded successfully! Admin details stored in company record.`;
+            setSuccess(successMessage);
+            setTimeout(() => navigate('/dashboard'), 2000);
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : 'An unexpected error occurred.');
         } finally {
@@ -55,6 +57,7 @@ const AddCompanyPage = () => {
 
     return (
         <div className="add-company-page">
+            {isLoading && <Loading fullScreen message="Creating company and admin account..." />}
             {success && <Notification message={success} type="success" onClose={() => setSuccess(null)} />}
             {error && <Notification message={error} type="error" onClose={() => setError(null)} />}
             <header className="add-company-page__header">
@@ -126,7 +129,7 @@ const AddCompanyPage = () => {
                         </fieldset>
                         <div className="add-company-page__footer">
                             <div className="add-company-page__actions">
-                                <Link to="/companies" className="add-company-page__btn add-company-page__btn--cancel">Cancel</Link>
+                                <Link to="/dashboard/companies" className="add-company-page__btn add-company-page__btn--cancel">Cancel</Link>
                                 <button type="submit" disabled={isLoading} className="add-company-page__btn add-company-page__btn--submit">
                                     {isLoading ? (
                                         <div className="add-company-page__loader">
