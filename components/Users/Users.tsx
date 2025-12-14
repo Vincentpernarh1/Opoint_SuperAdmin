@@ -14,7 +14,6 @@ import {
   BuildingOfficeIcon,
   UserCircleIcon
 } from '../Icons/Icons';
-import Notification from '../Notification/Notification';
 import Loading from '../Loading/Loading';
 import NotificationOverlay from '../NotificationOverlay/NotificationOverlay';
 import ConfirmationModal from '../ConfirmationModal/ConfirmationModal';

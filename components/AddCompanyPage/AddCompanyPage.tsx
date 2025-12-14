@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import type { NewCompanyData } from '../../types';
 import { api } from '../../services/api';
 import { UserCircleIcon, MailIcon, ArrowLeftIcon, BuildingOfficeIcon } from '../Icons/Icons';
-import Notification from '../Notification/Notification';
+import NotificationOverlay from '../NotificationOverlay/NotificationOverlay';
 import Loading from '../Loading/Loading';
 import './AddCompanyPage.scss';
 
@@ -23,8 +23,11 @@ const AddCompanyPage = () => {
         announcements: true,
     });
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState<string | null>(null);
+    const [notification, setNotification] = useState<{
+        message: string;
+        type: 'success' | 'error';
+        isVisible: boolean;
+    } | null>(null);
 
     const handleModuleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, checked } = e.target;
@@ -36,18 +39,25 @@ const AddCompanyPage = () => {
         if (isLoading) return;
 
         setIsLoading(true);
-        setError(null);
-        setSuccess(null);
+        setNotification(null);
 
         const data: NewCompanyData = { name, licenseCount, registrationId, address, modules, adminName, adminEmail };
 
         try {
             const result = await api.createCompanyAndAdmin(data);
             const successMessage = `Company "${result.company.name}" onboarded successfully! Admin details stored in company record.`;
-            setSuccess(successMessage);
+            setNotification({
+                message: successMessage,
+                type: 'success',
+                isVisible: true
+            });
             setTimeout(() => navigate('/dashboard'), 2000);
         } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : 'An unexpected error occurred.');
+            setNotification({
+                message: err instanceof Error ? err.message : 'An unexpected error occurred.',
+                type: 'error',
+                isVisible: true
+            });
         } finally {
             setIsLoading(false);
         }
@@ -58,8 +68,12 @@ const AddCompanyPage = () => {
     return (
         <div className="add-company-page">
             {isLoading && <Loading fullScreen message="Creating company and admin account..." />}
-            {success && <Notification message={success} type="success" onClose={() => setSuccess(null)} />}
-            {error && <Notification message={error} type="error" onClose={() => setError(null)} />}
+            <NotificationOverlay
+                message={notification?.message || ''}
+                type={notification?.type || 'success'}
+                isVisible={notification?.isVisible || false}
+                onClose={() => setNotification(null)}
+            />
             <header className="add-company-page__header">
                 <Link to="/dashboard/companies" className="add-company-page__back-link">
                     <ArrowLeftIcon className="add-company-page__back-icon" />

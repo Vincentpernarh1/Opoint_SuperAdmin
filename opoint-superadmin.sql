@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS opoint_superadmin (
 
 
 
-select * from opoint_companies
+select * from opoint_companies;
 
 
 DROP TABLE IF EXISTS opoint_companies;
@@ -66,6 +66,127 @@ CREATE TABLE IF NOT EXISTS opoint_payroll_history (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Function to create company user table and insert admin user
+CREATE OR REPLACE FUNCTION create_company_user_table(
+    company_name TEXT,
+    company_id UUID,
+    admin_id UUID,
+    admin_name TEXT,
+    admin_email TEXT
+)
+RETURNS VOID AS $$
+DECLARE
+    table_name TEXT := 'company_' || lower(replace(company_name, ' ', '_')) || '_users';
+BEGIN
+    -- Create the table if it doesn't exist
+    EXECUTE format('CREATE TABLE IF NOT EXISTS %I (
+        id UUID PRIMARY KEY,
+        company_id UUID,
+        name TEXT,
+        email TEXT,
+        password_hash TEXT,
+        role TEXT,
+        basic_salary NUMERIC,
+        mobile_money_number TEXT,
+        date_of_birth DATE,
+        hire_date DATE,
+        department TEXT,
+        position TEXT,
+        status TEXT,
+        avatar_url TEXT,
+        requires_password_change BOOLEAN,
+        last_login TIMESTAMP WITH TIME ZONE,
+        is_active BOOLEAN,
+        created_at TIMESTAMP WITH TIME ZONE,
+        updated_at TIMESTAMP WITH TIME ZONE,
+        auth_user_id UUID,
+        temporary_password TEXT,
+        password_changed_at TIMESTAMP WITH TIME ZONE
+    )', table_name);
+    
+    -- Insert the admin user
+    EXECUTE format('INSERT INTO %I (id, company_id, name, email, role, status, is_active, requires_password_change, created_at, updated_at) 
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)', table_name)
+    USING admin_id, company_id, admin_name, admin_email, 'admin', 'active', true, true, NOW(), NOW();
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+
+
+
+
+
+
+
+
+
+
+ALTER FUNCTION create_company_user_table(TEXT, UUID, UUID, TEXT, TEXT) SECURITY DEFINER;
+
+-- Function to drop company user table
+CREATE OR REPLACE FUNCTION drop_company_user_table(
+    company_name TEXT
+)
+RETURNS VOID AS $$
+DECLARE
+    table_name TEXT := 'company_' || lower(replace(company_name, ' ', '_')) || '_users';
+BEGIN
+    -- Drop the table if it exists
+    EXECUTE format('DROP TABLE IF EXISTS %I', table_name);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+
+
+-- Function to create company user table and insert admin user
+CREATE OR REPLACE FUNCTION create_company_user_table(
+    company_name TEXT,
+    company_id UUID,
+    admin_id UUID,
+    admin_name TEXT,
+    admin_email TEXT
+)
+RETURNS VOID AS $$
+DECLARE
+    table_name TEXT := 'company_' || lower(replace(company_name, ' ', '_')) || '_users';
+BEGIN
+    -- Create the table if it doesn't exist
+    EXECUTE format('CREATE TABLE IF NOT EXISTS %I (
+        id UUID PRIMARY KEY,
+        company_id UUID,
+        name TEXT,
+        email TEXT,
+        password_hash TEXT,
+        role TEXT,
+        basic_salary NUMERIC,
+        mobile_money_number TEXT,
+        date_of_birth DATE,
+        hire_date DATE,
+        department TEXT,
+        position TEXT,
+        status TEXT,
+        avatar_url TEXT,
+        requires_password_change BOOLEAN,
+        last_login TIMESTAMP WITH TIME ZONE,
+        is_active BOOLEAN,
+        created_at TIMESTAMP WITH TIME ZONE,
+        updated_at TIMESTAMP WITH TIME ZONE,
+        auth_user_id UUID,
+        temporary_password TEXT,
+        password_changed_at TIMESTAMP WITH TIME ZONE
+    )', table_name);
+    
+    -- Insert the admin user
+    EXECUTE format('INSERT INTO %I (id, company_id, name, email, role, status, is_active, requires_password_change, created_at, updated_at) 
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)', table_name)
+    USING admin_id, company_id, admin_name, admin_email, 'admin', 'active', true, true, NOW(), NOW();
+END;
+$$ LANGUAGE plpgsql;
+
+
 
 select * from opoint_superadmin;
 select * from opoint_companies;

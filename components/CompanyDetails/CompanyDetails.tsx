@@ -12,7 +12,6 @@ import {
   UsersGroupIcon
 } from '../Icons/Icons';
 import Loading from '../Loading/Loading';
-import Notification from '../Notification/Notification';
 import './CompanyDetails.scss';
 
 const CompanyDetails = ({ theme }: { theme: 'light' | 'dark' }) => {

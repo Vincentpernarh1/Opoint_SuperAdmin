@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcrypt';
 
 let supabase = null;
+let supabaseAdmin = null;
 let currentCompanyId = null;
 let currentUserId = null;
 
@@ -21,6 +22,23 @@ export function getSupabaseClient() {
     }
     
     return supabase;
+}
+
+// Create Supabase admin client with service role for DDL operations
+export function getSupabaseAdminClient() {
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+        console.warn('⚠️  Supabase service role key not found. Admin operations disabled.');
+        return null;
+    }
+    
+    if (!supabaseAdmin) {
+        supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    }
+    
+    return supabaseAdmin;
 }
 
 // Set company context for RLS (Row Level Security)
@@ -164,14 +182,52 @@ export const db = {
 
     async deleteCompany(companyId) {
         const client = getSupabaseClient();
-        if (!client) return { data: null, error: 'Database not configured' };
+        const adminClient = getSupabaseAdminClient();
+        if (!client || !adminClient) return { data: null, error: 'Database not configured' };
         
-        const { data, error } = await client
-            .from('opoint_companies')
-            .delete()
-            .eq('id', companyId);
-        
-        return { data, error };
+        try {
+            // First, get the company details to get the name
+            const { data: company, error: fetchError } = await client
+                .from('opoint_companies')
+                .select('name')
+                .eq('id', companyId)
+                .single();
+            
+            if (fetchError) {
+                console.error('Error fetching company for deletion:', fetchError);
+                return { data: null, error: fetchError.message };
+            }
+            
+            if (!company) {
+                return { data: null, error: 'Company not found' };
+            }
+            
+            // Drop the user table
+            const { error: rpcError } = await adminClient.rpc('drop_company_user_table', {
+                company_name: company.name
+            });
+            
+            if (rpcError) {
+                console.error('Error dropping user table:', rpcError);
+                // Log the error but continue with company deletion
+            }
+            
+            // Then, delete the company
+            const { data, error } = await client
+                .from('opoint_companies')
+                .delete()
+                .eq('id', companyId);
+            
+            if (error) {
+                console.error('Error deleting company:', error);
+                return { data: null, error: error.message };
+            }
+            
+            return { data, error: null };
+        } catch (err) {
+            console.error('Unexpected error in deleteCompany:', err);
+            return { data: null, error: err.message };
+        }
     },
 
     // --- PAYROLL HISTORY ---
@@ -464,29 +520,60 @@ export const db = {
     // Company functions
     async createCompany(companyData) {
         const client = getSupabaseClient();
-        if (!client) return { data: null, error: 'Database not configured' };
+        const adminClient = getSupabaseAdminClient();
+        if (!client || !adminClient) return { data: null, error: 'Database not configured' };
         
-        const { data, error } = await client
-            .from('opoint_companies')
-            .insert({
-                name: companyData.name,
-                license_count: companyData.licenseCount,
-                used_licenses: 0,
-                status: 'Active',
-                modules: companyData.modules,
-                description: companyData.description || null,
-                registration_id: companyData.registrationId || null,
-                address: companyData.address || null,
+        // Generate UUIDs
+        const companyId = crypto.randomUUID();
+        const adminId = crypto.randomUUID();
+        
+        try {
+            // First, create the user table and insert admin user using admin client
+            const { error: rpcError } = await adminClient.rpc('create_company_user_table', {
+                company_name: companyData.name,
+                company_id: companyId,
+                admin_id: adminId,
                 admin_name: companyData.adminName,
-                admin_email: companyData.adminEmail,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-                admin_id: null
-            })
-            .select()
-            .single();
-        
-        return { data, error };
+                admin_email: companyData.adminEmail
+            });
+            
+            if (rpcError) {
+                console.error('Error creating user table:', rpcError);
+                return { data: null, error: rpcError.message };
+            }
+            
+            // Then, insert the company using regular client
+            const { data, error } = await client
+                .from('opoint_companies')
+                .insert({
+                    id: companyId,
+                    name: companyData.name,
+                    license_count: companyData.licenseCount,
+                    used_licenses: 0,
+                    status: 'Active',
+                    modules: companyData.modules,
+                    description: companyData.description || null,
+                    registration_id: companyData.registrationId || null,
+                    address: companyData.address || null,
+                    admin_name: companyData.adminName,
+                    admin_email: companyData.adminEmail,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                    admin_id: adminId
+                })
+                .select()
+                .single();
+            
+            if (error) {
+                console.error('Error inserting company:', error);
+                return { data: null, error: error.message };
+            }
+            
+            return { data, error: null };
+        } catch (err) {
+            console.error('Unexpected error in createCompany:', err);
+            return { data: null, error: err.message };
+        }
     },
 
     async getAllCompanies() {
