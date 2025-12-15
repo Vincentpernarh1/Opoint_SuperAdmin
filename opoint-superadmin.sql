@@ -13,6 +13,8 @@ CREATE TABLE IF NOT EXISTS opoint_superadmin (
 select * from opoint_companies;
 
 
+select * from company_vpena_teck_users;
+
 DROP TABLE IF EXISTS opoint_companies;
 
 
@@ -128,8 +130,6 @@ $$ LANGUAGE plpgsql;
 
 
 
-ALTER FUNCTION create_company_user_table(TEXT, UUID, UUID, TEXT, TEXT) SECURITY DEFINER;
-
 -- Function to drop company user table
 CREATE OR REPLACE FUNCTION drop_company_user_table(
     company_name TEXT
@@ -142,6 +142,8 @@ BEGIN
     EXECUTE format('DROP TABLE IF EXISTS %I', table_name);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+
 
 
 
@@ -184,12 +186,17 @@ BEGIN
     )', table_name);
     
     -- Insert the admin user
-    EXECUTE format('INSERT INTO %I (id, company_id, name, email, role, status, is_active, requires_password_change, created_at, updated_at) 
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)', table_name)
-    USING admin_id, company_id, admin_name, admin_email, 'admin', 'active', true, true, NOW(), NOW();
+    EXECUTE format('INSERT INTO %I (id, company_id, name, email, role, status, is_active, requires_password_change, temporary_password, created_at, updated_at) 
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)', table_name)
+    USING admin_id, company_id, admin_name, admin_email, 'admin', 'active', true, true, '1234', NOW(), NOW();
 END;
 $$ LANGUAGE plpgsql;
 
+
+
+
+
+GRANT CREATE ON SCHEMA public TO service_role;
 
 
 select * from opoint_superadmin;

@@ -45,7 +45,7 @@ const CompanyDetails = ({ theme }: { theme: 'light' | 'dark' }) => {
     fetchCompany();
   }, [id]);
 
-  console.log('CompanyDetails: about to render', { loading, error, company });
+  // console.log('CompanyDetails: about to render', { loading, error, company });
 
   if (loading) {
     return <Loading message="Loading company details..." size="large" fullScreen={true} />;

@@ -1,13 +1,11 @@
 
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
-import dotenv from 'dotenv';
 import db, { getSupabaseClient, setCompanyContext } from './services/database.js';
 import { validatePasswordStrength } from './utils/passwordValidator.js';
-
-dotenv.config();
 
 const app = express();
 

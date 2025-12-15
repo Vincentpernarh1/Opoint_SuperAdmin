@@ -47,6 +47,8 @@ const AddCompanyPage = () => {
         try {
             const result = await api.createCompanyAndAdmin(data);
             const encryptedId = encrypt(result.company.id);
+            console.log('Company ID:', result.company.id);
+            console.log('Encrypted ID:', encryptedId);
             const baseUrl = process.env.REACT_APP_BASE_URL || 'https://yourapp.com'; // Set your base URL in env
             const loginUrl = `${baseUrl}/${encryptedId}/login`;
             const successMessage = `Company "${result.company.name}" onboarded successfully! Admin details stored in company record. Share this login link with the admin: ${loginUrl}`;

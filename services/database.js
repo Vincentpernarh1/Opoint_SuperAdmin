@@ -3,7 +3,11 @@ import bcrypt from 'bcrypt';
 import CryptoJS from 'crypto-js';
 
 // Encryption functions
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'your-default-secret-key-change-this';
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
+
+if (!ENCRYPTION_KEY) {
+  throw new Error('ENCRYPTION_KEY is not set in environment variables');
+}
 
 function encrypt(text) {
   return CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
@@ -558,7 +562,7 @@ export const db = {
             // Then, insert the company using regular client
             const encryptedId = encrypt(companyId);
             const baseUrl = process.env.BASE_URL || 'http://localhost:5173'; // Adjust port as needed
-            const loginUrl = `${baseUrl}/${encryptedId}/login`;
+            const loginUrl = `${baseUrl}/login/${encryptedId}`;
             const tableName = `company_${companyData.name.toLowerCase().replace(/ /g, '_')}_users`;
             
             const { data, error } = await client

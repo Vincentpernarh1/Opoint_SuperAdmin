@@ -1,7 +1,10 @@
 import CryptoJS from 'crypto-js';
 
-// Shared secret key for encryption/decryption (store securely in env vars)
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'your-default-secret-key-change-this'; // Use a strong key in production
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
+
+if (!ENCRYPTION_KEY) {
+  throw new Error('ENCRYPTION_KEY is not set in environment variables');
+}
 
 /**
  * Encrypts a plain text string using AES encryption.
@@ -9,7 +12,7 @@ const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'your-default-secret-key-ch
  * @param text - The plain text to encrypt (e.g., company ID as string)
  * @returns The encrypted, base64-encoded string
  */
-export function encrypt(text: string): string {
+export function encrypt(text) {
   const encrypted = CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
   return encrypted;
 }
@@ -19,7 +22,7 @@ export function encrypt(text: string): string {
  * @param encryptedText - The base64-encoded encrypted string
  * @returns The decrypted plain text (e.g., company ID)
  */
-export function decrypt(encryptedText: string): string {
+export function decrypt(encryptedText) {
   const bytes = CryptoJS.AES.decrypt(encryptedText, ENCRYPTION_KEY);
   const decrypted = bytes.toString(CryptoJS.enc.Utf8);
   return decrypted;

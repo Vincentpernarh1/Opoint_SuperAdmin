@@ -17,6 +17,7 @@ const Users = lazy(() => import('../components/Users/Users'));
 const Settings = lazy(() => import('../components/Settings/Settings'));
 const SuperAdmins = lazy(() => import('../components/SuperAdmins/SuperAdmins'));
 const EditSuperAdmin = lazy(() => import('../components/EditSuperAdmin/EditSuperAdmin'));
+import TestDecrypt from '../components/TestDecrypt/TestDecrypt';
 import './App.css';
 
 const App = () => {
@@ -54,6 +55,7 @@ const App = () => {
       <Suspense fallback={<div className="loading">Loading...</div>}>
         <Routes>
           <Route path="/login" element={currentUser ? <Navigate to="/dashboard" /> : <SuperAdminLogin onLogin={handleLogin} />} />
+          <Route path="/:encryptedId/login" element={<TestDecrypt />} />
           <Route path="/" element={<Navigate to="/login" />} />
           <Route
             path="/dashboard/*"
