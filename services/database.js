@@ -371,7 +371,7 @@ export const db = {
         if (!client) return { data: null, error: 'Database not configured' };
         
         const { data, error } = await client
-            .from('P360-Opoint_User')
+            .from('opoint_users')
             .update({ 
                 password_hash: passwordHash,
                 temporary_password: null, // Clear temporary password
@@ -545,25 +545,10 @@ export const db = {
         const adminId = crypto.randomUUID();
         
         try {
-            // First, create the user table and insert admin user using admin client
-            const { error: rpcError } = await adminClient.rpc('create_company_user_table', {
-                company_name: companyData.name,
-                company_id: companyId,
-                admin_id: adminId,
-                admin_name: companyData.adminName,
-                admin_email: companyData.adminEmail
-            });
-            
-            if (rpcError) {
-                console.error('Error creating user table:', rpcError);
-                return { data: null, error: rpcError.message };
-            }
-            
-            // Then, insert the company using regular client
+            // Insert the company using regular client
             const encryptedId = encrypt(companyId);
             const baseUrl = process.env.BASE_URL || 'http://localhost:5173'; // Adjust port as needed
             const loginUrl = `${baseUrl}/login/${encryptedId}`;
-            const tableName = `company_${companyData.name.toLowerCase().replace(/ /g, '_')}_users`;
             
             const { data, error } = await client
                 .from('opoint_companies')
@@ -580,7 +565,6 @@ export const db = {
                     admin_name: companyData.adminName,
                     admin_email: companyData.adminEmail,
                     login_url: loginUrl,
-                    table_name: tableName,
                     created_at: new Date().toISOString(),
                     updated_at: new Date().toISOString(),
                     admin_id: adminId
@@ -592,6 +576,59 @@ export const db = {
                 console.error('Error inserting company:', error);
                 return { data: null, error: error.message };
             }
+            
+            console.log('Company inserted successfully:', data.name);
+            
+            // Insert admin into shared opoint_users
+            const { error: userError } = await client
+                .from('opoint_users')
+                .insert({
+                    id: adminId,
+                    name: companyData.adminName,
+                    email: companyData.adminEmail,
+                    role: 'Admin',
+                    status: 'Active',
+                    tenant_id: companyId,
+                    company_name: companyData.name,
+                    basic_salary: 0,
+                    hire_date: new Date().toISOString().split('T')[0],
+                    temporary_password: '1234',
+                    requires_password_change: true,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                });
+            
+            if (userError) {
+                console.error('Error inserting admin user:', userError);
+                return { data: null, error: userError.message };
+            }
+            
+            console.log('Admin user inserted successfully:', companyData.adminEmail);
+            
+            // Insert into opoint_employees
+            const { error: employeeError } = await client
+                .from('opoint_employees')
+                .insert({
+                    id: adminId,
+                    tenant_id: companyId,
+                    company_name: companyData.name,
+                    name: companyData.adminName,
+                    email: companyData.adminEmail,
+                    role: 'Admin',
+                    department: 'Management',
+                    position: 'Company Admin',
+                    status: 'Active',
+                    hire_date: new Date().toISOString().split('T')[0],
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                });
+            
+            if (employeeError) {
+                console.error('Error inserting admin employee:', employeeError);
+                return { data: null, error: employeeError.message };
+            }
+            
+            console.log('Admin employee inserted successfully:', companyData.adminEmail);
             
             return { data, error: null };
         } catch (err) {

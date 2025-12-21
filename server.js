@@ -330,7 +330,6 @@ function transformCompany(company) {
         adminName: company.admin_name,
         adminEmail: company.admin_email,
         loginUrl: company.login_url,
-        tableName: company.table_name,
         createdAt: parseDate(company.created_at),
         updatedAt: parseDate(company.updated_at),
         adminId: company.admin_id
@@ -348,10 +347,16 @@ function transformUser(user) {
         avatarUrl: user.avatar_url,
         team: user.team || '',
         companyId: user.company_id,
+        tenantId: user.tenant_id,
+        companyName: user.company_name,
         basicSalary: parseFloat(user.basic_salary),
         hireDate: user.hire_date ? new Date(user.hire_date) : undefined,
         mobileMoneyNumber: user.mobile_money_number,
         lastLogin: user.last_login ? new Date(user.last_login.replace(' ', 'T')) : undefined,
+        temporaryPassword: user.temporary_password,
+        passwordHash: user.password_hash,
+        requiresPasswordChange: user.requires_password_change,
+        passwordChangedAt: user.password_changed_at ? new Date(user.password_changed_at.replace(' ', 'T')) : undefined,
         createdAt: new Date(user.created_at.replace(' ', 'T')),
         updatedAt: new Date(user.updated_at.replace(' ', 'T'))
     };

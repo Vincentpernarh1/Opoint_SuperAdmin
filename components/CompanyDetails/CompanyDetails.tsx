@@ -226,28 +226,6 @@ const CompanyDetails = ({ theme }: { theme: 'light' | 'dark' }) => {
                       </button>
                     </div>
                   </div>
-                  {company.tableName && (
-                    <div className="detail-row">
-                      <span className="label">Table Name:</span>
-                      <div className="url-container">
-                        <input
-                          type="text"
-                          aria-label="Login URL"
-                          value={company.tableName}
-                          readOnly
-                          className="url-input"
-                          onClick={(e) => e.currentTarget.select()}
-                        />
-                        <button
-                          onClick={() => navigator.clipboard.writeText(company.tableName!)}
-                          className="copy-btn"
-                          title="Copy Table Name"
-                        >
-                          Copy
-                        </button>
-                      </div>
-                    </div>
-                  )}
                   {company.adminEmail && (
                     <div className="email-action">
                       <a

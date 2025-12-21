@@ -10,15 +10,6 @@ CREATE TABLE IF NOT EXISTS opoint_superadmin (
 
 
 
-select * from opoint_companies;
-
-
-select * from company_vpena_teck_users;
-
-DROP TABLE IF EXISTS opoint_companies;
-
-
-
 CREATE TABLE IF NOT EXISTS opoint_companies (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(255) NOT NULL,
@@ -32,17 +23,11 @@ CREATE TABLE IF NOT EXISTS opoint_companies (
     admin_name VARCHAR(255),
     admin_email VARCHAR(255),
     login_url TEXT,
-    table_name VARCHAR(255),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     admin_id UUID
 );
 
--- Add admin columns if they don't exist (for existing tables)
-ALTER TABLE opoint_companies ADD COLUMN IF NOT EXISTS admin_name VARCHAR(255);
-ALTER TABLE opoint_companies ADD COLUMN IF NOT EXISTS admin_email VARCHAR(255);
-ALTER TABLE opoint_companies ADD COLUMN IF NOT EXISTS login_url TEXT;
-ALTER TABLE opoint_companies ADD COLUMN IF NOT EXISTS table_name VARCHAR(255);
 
 
 
@@ -55,14 +40,22 @@ CREATE TABLE IF NOT EXISTS opoint_users (
     status VARCHAR(50) DEFAULT 'Active',
     avatar_url TEXT,
     company_id UUID,
+    tenant_id UUID REFERENCES opoint_companies(id),
+    company_name VARCHAR(255),
     basic_salary DECIMAL(10,2) DEFAULT 0,
     hire_date DATE,
+    temporary_password VARCHAR(255),
+    password_hash VARCHAR(255),
+    requires_password_change BOOLEAN DEFAULT false,
+    password_changed_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS opoint_payroll_history (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID REFERENCES opoint_companies(id),
+    company_name VARCHAR(255),
     transaction_id VARCHAR(255),
     user_id UUID,
     amount DECIMAL(10,2),
@@ -73,124 +66,132 @@ CREATE TABLE IF NOT EXISTS opoint_payroll_history (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Function to create company user table and insert admin user
-CREATE OR REPLACE FUNCTION create_company_user_table(
-    company_name TEXT,
-    company_id UUID,
-    admin_id UUID,
-    admin_name TEXT,
-    admin_email TEXT
-)
-RETURNS VOID AS $$
-DECLARE
-    table_name TEXT := 'company_' || lower(replace(company_name, ' ', '_')) || '_users';
-BEGIN
-    -- Create the table if it doesn't exist
-    EXECUTE format('CREATE TABLE IF NOT EXISTS %I (
-        id UUID PRIMARY KEY,
-        company_id UUID,
-        name TEXT,
-        email TEXT,
-        password_hash TEXT,
-        role TEXT,
-        basic_salary NUMERIC,
-        mobile_money_number TEXT,
-        date_of_birth DATE,
-        hire_date DATE,
-        department TEXT,
-        position TEXT,
-        status TEXT,
-        avatar_url TEXT,
-        requires_password_change BOOLEAN,
-        last_login TIMESTAMP WITH TIME ZONE,
-        is_active BOOLEAN,
-        created_at TIMESTAMP WITH TIME ZONE,
-        updated_at TIMESTAMP WITH TIME ZONE,
-        auth_user_id UUID,
-        temporary_password TEXT,
-        password_changed_at TIMESTAMP WITH TIME ZONE
-    )', table_name);
-    
-    -- Insert the admin user
-    EXECUTE format('INSERT INTO %I (id, company_id, name, email, role, status, is_active, requires_password_change, created_at, updated_at) 
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)', table_name)
-    USING admin_id, company_id, admin_name, admin_email, 'admin', 'active', true, true, NOW(), NOW();
-END;
-$$ LANGUAGE plpgsql;
+CREATE TABLE IF NOT EXISTS opoint_employees (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID REFERENCES opoint_companies(id),
+    company_name VARCHAR(255),
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255),
+    role VARCHAR(50),
+    department VARCHAR(100),
+    position VARCHAR(100),
+    basic_salary DECIMAL(10,2) DEFAULT 0,
+    hire_date DATE,
+    status VARCHAR(50) DEFAULT 'Active',
+    avatar_url TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS opoint_clock_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID REFERENCES opoint_companies(id),
+    company_name VARCHAR(255),
+    employee_id UUID,
+    employee_name VARCHAR(255),
+    clock_in TIMESTAMP WITH TIME ZONE,
+    clock_out TIMESTAMP WITH TIME ZONE,
+    location TEXT,
+    photo_url TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+
+
+CREATE TABLE IF NOT EXISTS opoint_leave_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID REFERENCES opoint_companies(id),
+    company_name VARCHAR(255),
+    employee_id UUID,
+     employee_name VARCHAR(255),
+    leave_type VARCHAR(50),
+    start_date DATE,
+    end_date DATE,
+    reason TEXT,
+    status VARCHAR(50) DEFAULT 'Pending',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS opoint_announcements (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID REFERENCES opoint_companies(id),
+    company_name VARCHAR(255),
+    title VARCHAR(255) NOT NULL,
+    content TEXT,
+    author_id UUID,
+    author_name VARCHAR(255),
+    is_active BOOLEAN DEFAULT true,
+    image_url TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+
+
+
+-- Notifications table
+CREATE TABLE IF NOT EXISTS opoint_notifications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL,
+    user_id UUID NOT NULL,
+    announcement_id UUID REFERENCES opoint_announcements(id) ON DELETE CASCADE,
+    type TEXT DEFAULT 'announcement', -- 'announcement', 'system', 'reminder'
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT false,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create indexes
+CREATE INDEX IF NOT EXISTS idx_notifications_tenant_id ON opoint_notifications(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON opoint_notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON opoint_notifications(is_read);
+CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON opoint_notifications(created_at);
+
+
+
+-- Indexes for performance on tenant_id
+CREATE INDEX IF NOT EXISTS idx_opoint_users_tenant_id ON opoint_users(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_opoint_payroll_history_tenant_id ON opoint_payroll_history(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_opoint_employees_tenant_id ON opoint_employees(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_opoint_clock_logs_tenant_id ON opoint_clock_logs(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_opoint_leave_logs_tenant_id ON opoint_leave_logs(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_opoint_announcements_tenant_id ON opoint_announcements(tenant_id);
 
 
 
 
 
+ALTER TABLE opoint_notifications
+    ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
+
+ALTER TABLE opoint_leave_logs
+ADD COLUMN IF NOT EXISTS employee_name VARCHAR(255);
 
 
 
+-- Create leave_balances table
+CREATE TABLE IF NOT EXISTS opoint_leave_balances (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID REFERENCES opoint_companies(id),
+    employee_id UUID,
+    leave_type VARCHAR(50) NOT NULL,
+    total_days DECIMAL(5,2) DEFAULT 0,
+    used_days DECIMAL(5,2) DEFAULT 0,
+    remaining_days DECIMAL(5,2) DEFAULT 0,
+    year INTEGER NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(tenant_id, employee_id, leave_type, year)
+);
+
+-- Index for performance
+CREATE INDEX IF NOT EXISTS idx_opoint_leave_balances_tenant_employee ON opoint_leave_balances(tenant_id, employee_id);
+CREATE INDEX IF NOT EXISTS idx_opoint_leave_balances_year ON opoint_leave_balances(year);
 
 
-
-
-
--- Function to drop company user table
-CREATE OR REPLACE FUNCTION drop_company_user_table(
-    company_name TEXT
-)
-RETURNS VOID AS $$
-DECLARE
-    table_name TEXT := 'company_' || lower(replace(company_name, ' ', '_')) || '_users';
-BEGIN
-    -- Drop the table if it exists
-    EXECUTE format('DROP TABLE IF EXISTS %I', table_name);
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-
-
-
-
--- Function to create company user table and insert admin user
-CREATE OR REPLACE FUNCTION create_company_user_table(
-    company_name TEXT,
-    company_id UUID,
-    admin_id UUID,
-    admin_name TEXT,
-    admin_email TEXT
-)
-RETURNS VOID AS $$
-DECLARE
-    table_name TEXT := 'company_' || lower(replace(company_name, ' ', '_')) || '_users';
-BEGIN
-    -- Create the table if it doesn't exist
-    EXECUTE format('CREATE TABLE IF NOT EXISTS %I (
-        id UUID PRIMARY KEY,
-        company_id UUID,
-        name TEXT,
-        email TEXT,
-        password_hash TEXT,
-        role TEXT,
-        basic_salary NUMERIC,
-        mobile_money_number TEXT,
-        date_of_birth DATE,
-        hire_date DATE,
-        department TEXT,
-        position TEXT,
-        status TEXT,
-        avatar_url TEXT,
-        requires_password_change BOOLEAN,
-        last_login TIMESTAMP WITH TIME ZONE,
-        is_active BOOLEAN,
-        created_at TIMESTAMP WITH TIME ZONE,
-        updated_at TIMESTAMP WITH TIME ZONE,
-        auth_user_id UUID,
-        temporary_password TEXT,
-        password_changed_at TIMESTAMP WITH TIME ZONE
-    )', table_name);
-    
-    -- Insert the admin user
-    EXECUTE format('INSERT INTO %I (id, company_id, name, email, role, status, is_active, requires_password_change, temporary_password, created_at, updated_at) 
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)', table_name)
-    USING admin_id, company_id, admin_name, admin_email, 'admin', 'active', true, true, '1234', NOW(), NOW();
-END;
-$$ LANGUAGE plpgsql;
 
 
 
@@ -203,3 +204,17 @@ select * from opoint_superadmin;
 select * from opoint_companies;
 select * from opoint_users;
 select * from opoint_payroll_history;
+select * from opoint_employees;
+select * from opoint_clock_logs;
+select * from opoint_leave_logs;
+select * from opoint_announcements;
+
+
+
+
+drop table opoint_users;
+drop table opoint_payroll_history;
+drop table opoint_employees;
+drop table opoint_clock_logs;
+drop table opoint_leave_logs;
+drop table opoint_announcements;

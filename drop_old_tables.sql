@@ -1,2 +1,0 @@
-DROP TABLE IF EXISTS \
-P360-Opoint_Companies\; DROP TABLE IF EXISTS \P360-Opoint_User\; DROP TABLE IF EXISTS \P360-Opoint_PayrollHistory\;

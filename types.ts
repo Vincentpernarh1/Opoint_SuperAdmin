@@ -37,7 +37,6 @@ export interface Company {
   adminName?: string;
   adminEmail?: string;
   loginUrl?: string;
-  tableName?: string;
   createdAt: Date;
   updatedAt: Date | null;
   adminId?: string;
@@ -58,10 +57,16 @@ export interface User {
   avatarUrl: string;
   team: string;
   companyId?: string; // Link user to a company
+  tenantId?: string; // Multi-tenant identifier
+  companyName?: string;
   basicSalary: number; // GHS
   hireDate: Date;
   mobileMoneyNumber?: string; // For MoMo Payroll
   lastLogin?: Date;
+  temporaryPassword?: string;
+  passwordHash?: string;
+  requiresPasswordChange?: boolean;
+  passwordChangedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -159,6 +164,8 @@ export interface Announcement {
     date: Date;
     isRead?: boolean;
     imageUrl?: string;
+    companyName?: string;
+    authorName?: string;
 }
 
 export interface ExpenseRequest {
