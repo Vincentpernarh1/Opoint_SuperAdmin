@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS opoint_users (
     tenant_id UUID REFERENCES opoint_companies(id),
     company_name VARCHAR(255),
     basic_salary DECIMAL(10,2) DEFAULT 0,
+   mobile_money_number TEXT,
     hire_date DATE,
     temporary_password VARCHAR(255),
     password_hash VARCHAR(255),
@@ -192,8 +193,68 @@ CREATE INDEX IF NOT EXISTS idx_opoint_leave_balances_tenant_employee ON opoint_l
 CREATE INDEX IF NOT EXISTS idx_opoint_leave_balances_year ON opoint_leave_balances(year);
 
 
+-- =====================================================
+-- Migration: Create Expense Claims Table
+-- =====================================================
+
+-- Create expense claims table
+CREATE TABLE IF NOT EXISTS opoint_expense_claims (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID REFERENCES opoint_companies(id),
+    employee_id UUID,
+    employee_name VARCHAR(255),
+    description TEXT NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    expense_date DATE NOT NULL,
+    receipt_url TEXT,
+    status VARCHAR(50) DEFAULT 'pending', -- 'pending', 'approved', 'rejected'
+    submitted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    reviewed_by UUID,
+    reviewed_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Index for performance
+CREATE INDEX IF NOT EXISTS idx_opoint_expense_claims_tenant_id ON opoint_expense_claims(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_opoint_expense_claims_employee_id ON opoint_expense_claims(employee_id);
+CREATE INDEX IF NOT EXISTS idx_opoint_expense_claims_status ON opoint_expense_claims(status);
+CREATE INDEX IF NOT EXISTS idx_opoint_expense_claims_submitted_at ON opoint_expense_claims(submitted_at);
 
 
+
+
+
+-- Migration: Create profile_update_requests table
+-- This table stores requests for profile updates that require approval
+
+CREATE TABLE IF NOT EXISTS opoint_profile_update_requests (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID REFERENCES opoint_companies(id),
+    user_id UUID NOT NULL,
+    employee_name TEXT NOT NULL,
+    field_name TEXT NOT NULL, -- e.g., 'mobile_money_number'
+    current_value TEXT,
+    requested_value TEXT NOT NULL,
+    status VARCHAR(50) DEFAULT 'Pending', -- 'Pending', 'Approved', 'Rejected'
+    requested_by UUID NOT NULL,
+    requested_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    reviewed_by UUID,
+    reviewed_at TIMESTAMP WITH TIME ZONE,
+    review_notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Add index for better performance
+CREATE INDEX IF NOT EXISTS idx_profile_update_requests_tenant_user ON opoint_profile_update_requests(tenant_id, user_id);
+CREATE INDEX IF NOT EXISTS idx_profile_update_requests_status ON opoint_profile_update_requests(status);
+
+-- Add comment for documentation
+COMMENT ON TABLE opoint_profile_update_requests IS 'Stores profile update requests that require approval before being applied';
+COMMENT ON COLUMN opoint_profile_update_requests.field_name IS 'The field being requested for update (e.g., mobile_money_number)';
+COMMENT ON COLUMN opoint_profile_update_requests.current_value IS 'The current value of the field';
+COMMENT ON COLUMN opoint_profile_update_requests.requested_value IS 'The new value requested for the field';
 
 
 
@@ -218,3 +279,10 @@ drop table opoint_employees;
 drop table opoint_clock_logs;
 drop table opoint_leave_logs;
 drop table opoint_announcements;
+
+
+commit;
+
+
+select* from opoint_users
+where email = 'pernarhv30@gmail.com';

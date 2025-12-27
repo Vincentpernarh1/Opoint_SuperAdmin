@@ -219,6 +219,117 @@ export const db = {
                 return { data: null, error: 'Company not found' };
             }
             
+            // Delete all related records first to avoid foreign key constraints
+            // Delete profile update requests
+            const { error: profileRequestsError } = await client
+                .from('opoint_profile_update_requests')
+                .delete()
+                .eq('tenant_id', companyId);
+            
+            if (profileRequestsError) {
+                console.error('Error deleting profile update requests:', profileRequestsError);
+                return { data: null, error: profileRequestsError.message };
+            }
+            
+            // Delete expense claims
+            const { error: expenseClaimsError } = await client
+                .from('opoint_expense_claims')
+                .delete()
+                .eq('tenant_id', companyId);
+            
+            if (expenseClaimsError) {
+                console.error('Error deleting expense claims:', expenseClaimsError);
+                return { data: null, error: expenseClaimsError.message };
+            }
+            
+            // Delete leave balances
+            const { error: leaveBalancesError } = await client
+                .from('opoint_leave_balances')
+                .delete()
+                .eq('tenant_id', companyId);
+            
+            if (leaveBalancesError) {
+                console.error('Error deleting leave balances:', leaveBalancesError);
+                return { data: null, error: leaveBalancesError.message };
+            }
+            
+            // Delete leave logs
+            const { error: leaveLogsError } = await client
+                .from('opoint_leave_logs')
+                .delete()
+                .eq('tenant_id', companyId);
+            
+            if (leaveLogsError) {
+                console.error('Error deleting leave logs:', leaveLogsError);
+                return { data: null, error: leaveLogsError.message };
+            }
+            
+            // Delete announcements (this will cascade to notifications due to foreign key)
+            const { error: announcementsError } = await client
+                .from('opoint_announcements')
+                .delete()
+                .eq('tenant_id', companyId);
+            
+            if (announcementsError) {
+                console.error('Error deleting announcements:', announcementsError);
+                return { data: null, error: announcementsError.message };
+            }
+            
+            // Delete remaining notifications (system notifications not tied to announcements)
+            const { error: notificationsError } = await client
+                .from('opoint_notifications')
+                .delete()
+                .eq('tenant_id', companyId);
+            
+            if (notificationsError) {
+                console.error('Error deleting notifications:', notificationsError);
+                return { data: null, error: notificationsError.message };
+            }
+            
+            // Delete clock logs
+            const { error: clockLogsError } = await client
+                .from('opoint_clock_logs')
+                .delete()
+                .eq('tenant_id', companyId);
+            
+            if (clockLogsError) {
+                console.error('Error deleting clock logs:', clockLogsError);
+                return { data: null, error: clockLogsError.message };
+            }
+            
+            // Delete employees
+            const { error: employeesError } = await client
+                .from('opoint_employees')
+                .delete()
+                .eq('tenant_id', companyId);
+            
+            if (employeesError) {
+                console.error('Error deleting employees:', employeesError);
+                return { data: null, error: employeesError.message };
+            }
+            
+            // Delete payroll history
+            const { error: payrollError } = await client
+                .from('opoint_payroll_history')
+                .delete()
+                .eq('tenant_id', companyId);
+            
+            if (payrollError) {
+                console.error('Error deleting payroll history:', payrollError);
+                return { data: null, error: payrollError.message };
+            }
+            
+            // Delete users (set tenant_id to null instead of deleting)
+            const { error: usersError } = await client
+                .from('opoint_users')
+                .update({ tenant_id: null })
+                .eq('tenant_id', companyId);
+            
+            if (usersError) {
+                console.error('Error updating users:', usersError);
+                return { data: null, error: usersError.message };
+            }
+            
             // Drop the user table
             const { error: rpcError } = await adminClient.rpc('drop_company_user_table', {
                 company_name: company.name
@@ -229,7 +340,7 @@ export const db = {
                 // Log the error but continue with company deletion
             }
             
-            // Then, delete the company
+            // Finally, delete the company
             const { data, error } = await client
                 .from('opoint_companies')
                 .delete()
