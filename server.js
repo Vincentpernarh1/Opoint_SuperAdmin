@@ -1635,7 +1635,11 @@ app.post('/api/momo/callback', async (req, res) => {
 
 // Catch-all route for client-side routing (must be after all API routes)
 if (IS_PRODUCTION) {
-    app.get('*', (req, res) => {
+    app.use((req, res, next) => {
+        // Skip API routes
+        if (req.path.startsWith('/api')) {
+            return next();
+        }
         res.sendFile(path.join(__dirname, 'dist', 'index.html'));
     });
 }
