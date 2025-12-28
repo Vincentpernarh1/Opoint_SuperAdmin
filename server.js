@@ -1188,7 +1188,14 @@ app.delete('/api/companies/:id', async (req, res) => {
 // --- USER MANAGEMENT ENDPOINTS ---
 app.get('/api/users', async (req, res) => {
     try {
-        const users = await getUsers();
+        const { companyId } = req.query;
+        let users = await getUsers();
+        
+        // Filter by companyId if provided
+        if (companyId) {
+            users = users.filter(user => user.tenant_id === companyId);
+        }
+        
         // Transform users to match frontend format
         const transformedUsers = users.map(user => transformUser(user));
         res.json({ success: true, data: transformedUsers });

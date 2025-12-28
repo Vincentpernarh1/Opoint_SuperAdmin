@@ -20,9 +20,10 @@ const CompanyDetails = ({ theme }: { theme: 'light' | 'dark' }) => {
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [actualUsedLicenses, setActualUsedLicenses] = useState<number>(0);
 
   useEffect(() => {
-    const fetchCompany = async () => {
+    const fetchCompanyAndUsers = async () => {
       if (!id) {
         console.log('No ID provided');
         return;
@@ -34,6 +35,10 @@ const CompanyDetails = ({ theme }: { theme: 'light' | 'dark' }) => {
         const data = await api.getCompany(id);
         // console.log('Company data received:', data);
         setCompany(data);
+
+        // Fetch users for this company to calculate actual license usage
+        const users = await api.getUsersByCompany(id);
+        setActualUsedLicenses(users.length);
       } catch (err) {
         console.error('Error fetching company:', err);
         setError('Failed to load company details');
@@ -42,7 +47,7 @@ const CompanyDetails = ({ theme }: { theme: 'light' | 'dark' }) => {
       }
     };
 
-    fetchCompany();
+    fetchCompanyAndUsers();
   }, [id]);
 
   // console.log('CompanyDetails: about to render', { loading, error, company });
@@ -148,20 +153,21 @@ const CompanyDetails = ({ theme }: { theme: 'light' | 'dark' }) => {
               </div>
               <div className="detail-row">
                 <span className="label">Used Licenses:</span>
-                <span className="value">{company.usedLicenses}</span>
+                <span className="value">{actualUsedLicenses}</span>
               </div>
               <div className="detail-row">
                 <span className="label">Available Licenses:</span>
-                <span className="value">{company.licenseCount - company.usedLicenses}</span>
+                <span className="value">{company.licenseCount - actualUsedLicenses}</span>
               </div>
               <div className="license-usage">
                 <div className="usage-bar">
                   <div
-                    className={`usage-fill usage-${Math.round((company.usedLicenses / company.licenseCount) * 100)}`}
+                    className={`usage-fill usage-${Math.round((actualUsedLicenses / company.licenseCount) * 100)}`}
+                    style={{ width: `${Math.min((actualUsedLicenses / company.licenseCount) * 100, 100)}%` }}
                   ></div>
                 </div>
                 <span className="usage-text">
-                  {Math.round((company.usedLicenses / company.licenseCount) * 100)}% used
+                  {company.licenseCount > 0 ? Math.round((actualUsedLicenses / company.licenseCount) * 100) : 0}% used
                 </span>
               </div>
             </div>

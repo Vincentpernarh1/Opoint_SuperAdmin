@@ -123,12 +123,18 @@ class ApiService {
   }
 
   async getUsersByCompany(companyId: string): Promise<User[]> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const companyUsers = this.users.filter(u => u.companyId === companyId);
-        resolve(companyUsers);
-      }, 300);
-    });
+    const response = await fetch(`/api/users?companyId=${companyId}`);
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch users for company');
+    }
+    
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to fetch users for company');
+    }
+    
+    return result.data;
   }
 
   async createUser(userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> {

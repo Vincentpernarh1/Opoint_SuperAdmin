@@ -284,23 +284,34 @@ const Companies = ({ theme }: { theme: 'light' | 'dark' }) => {
                 </div>
                 <div className="company-info">
                   <BuildingOfficeIcon className="company-icon" />
-                  <div>
+                  <div className="company-details">
                     <h3 className="company-name">{company.name}</h3>
-                    {company.description && (
-                      <p className="company-description">{company.description}</p>
-                    )}
-                    {company.registrationId && (
-                      <p className="company-registration-id">Reg ID: {company.registrationId}</p>
-                    )}
-                    {company.address && (
-                      <p className="company-address">{company.address}</p>
-                    )}
-                    {company.adminName && (
-                      <p className="company-admin">Admin: {company.adminName}</p>
-                    )}
+                    {getStatusBadge(company.status)}
                   </div>
                 </div>
-                {getStatusBadge(company.status)}
+              </div>
+
+              <div className="card-body">
+                {company.description && (
+                  <p className="company-description">{company.description}</p>
+                )}
+                <div className="company-meta">
+                  {company.registrationId && (
+                    <p className="company-registration-id">
+                      <span className="meta-label">Reg ID:</span> {company.registrationId}
+                    </p>
+                  )}
+                  {company.adminName && (
+                    <p className="company-admin">
+                      <span className="meta-label">Admin:</span> {company.adminName}
+                    </p>
+                  )}
+                  {company.address && (
+                    <p className="company-address">
+                      <span className="meta-label">Address:</span> {company.address}
+                    </p>
+                  )}
+                </div>
               </div>
 
               <div className="card-stats">

@@ -243,12 +243,14 @@
 
 .card-header {
   display: flex;
-  justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
 
   .company-select {
     margin-right: 0.75rem;
+    padding-top: 0.25rem;
   }
 
   .company-info {
@@ -258,46 +260,72 @@
     flex: 1;
 
     .company-icon {
-      width: 2rem;
-      height: 2rem;
+      width: 2.5rem;
+      height: 2.5rem;
       color: #6b7280;
       flex-shrink: 0;
-      margin-top: 0.125rem;
+    }
+
+    .company-details {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      flex: 1;
     }
 
     .company-name {
-      font-size: 1.125rem;
+      font-size: 1.25rem;
       font-weight: 600;
       color: #111827;
-      margin: 0 0 0.25rem 0;
+      margin: 0;
+      line-height: 1.4;
     }
+  }
+}
 
-    .company-description {
+.card-body {
+  margin-bottom: 1.25rem;
+
+  .company-description {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin: 0 0 1rem 0;
+    line-height: 1.6;
+  }
+
+  .company-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    p {
       font-size: 0.875rem;
       color: #6b7280;
       margin: 0;
-      line-height: 1.4;
+      line-height: 1.5;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+
+      .meta-label {
+        font-weight: 600;
+        color: #374151;
+        min-width: 4rem;
+        flex-shrink: 0;
+      }
     }
 
     .company-registration-id {
-      font-size: 0.875rem;
       color: #6b7280;
-      margin: 0;
-      line-height: 1.4;
+    }
+
+    .company-admin {
+      color: #6b7280;
     }
 
     .company-address {
-      font-size: 0.875rem;
       color: #6b7280;
-      margin: 0;
-      line-height: 1.4;
-    }
-
-    .company-registration-id {
-      font-size: 0.75rem;
-      color: #9ca3af;
-      margin: 0.25rem 0 0 0;
-      font-weight: 500;
     }
   }
 
@@ -339,13 +367,17 @@
 .card-stats {
   display: flex;
   gap: 1.5rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 0.5rem;
 
   .stat {
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
+    flex: 1;
 
     .stat-icon {
       width: 1.5rem;
@@ -516,6 +548,10 @@
     border-color: #374151;
   }
 
+  .card-header {
+    border-bottom-color: #374151;
+  }
+
   .company-name {
     color: #f9fafb;
   }
@@ -524,12 +560,18 @@
     color: #9ca3af;
   }
 
-  .company-registration-id {
-    color: #6b7280;
+  .company-meta {
+    p {
+      color: #9ca3af;
+
+      .meta-label {
+        color: #d1d5db;
+      }
+    }
   }
 
-  .company-address {
-    color: #6b7280;
+  .card-stats {
+    background: #111827;
   }
 
   .stat-value {
