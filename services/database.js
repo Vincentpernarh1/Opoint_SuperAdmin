@@ -98,25 +98,58 @@ export const db = {
         const client = getSupabaseClient();
         if (!client) return { data: [], error: 'Database not configured' };
         
-        const { data, error } = await client
+        const { data: users, error } = await client
             .from('opoint_users')
             .select('*')
             .order('created_at', { ascending: false });
         
-        return { data, error };
+        if (error) return { data: [], error };
+        
+        // Fetch company data and merge with users
+        const { data: companies, error: companiesError } = await client
+            .from('opoint_companies')
+            .select('id, name');
+        
+        if (companiesError) return { data: users, error: null };
+        
+        // Create a map for quick company lookup
+        const companyMap = new Map(companies.map(c => [c.id, c.name]));
+        
+        // Merge company names with users
+        const usersWithCompany = users.map(user => ({
+            ...user,
+            company_name: user.tenant_id ? (companyMap.get(user.tenant_id) || user.company_name) : user.company_name
+        }));
+        
+        return { data: usersWithCompany, error: null };
     },
 
     async getUserById(userId) {
         const client = getSupabaseClient();
         if (!client) return { data: null, error: 'Database not configured' };
         
-        const { data, error } = await client
+        const { data: user, error } = await client
             .from('opoint_users')
             .select('*')
             .eq('id', userId)
             .single();
         
-        return { data, error };
+        if (error || !user) return { data: user, error };
+        
+        // Fetch company name if tenant_id exists
+        if (user.tenant_id) {
+            const { data: company } = await client
+                .from('opoint_companies')
+                .select('name')
+                .eq('id', user.tenant_id)
+                .single();
+            
+            if (company) {
+                user.company_name = company.name;
+            }
+        }
+        
+        return { data: user, error: null };
     },
 
     async createUser(userData) {
@@ -752,12 +785,30 @@ export const db = {
         const client = getSupabaseClient();
         if (!client) return { data: null, error: 'Database not configured' };
         
-        const { data, error } = await client
+        const { data: companies, error } = await client
             .from('opoint_companies')
             .select('*')
             .order('created_at', { ascending: false });
         
-        return { data, error };
+        if (error) return { data: null, error };
+        
+        // Calculate used licenses for each company by counting active users
+        const companiesWithUsage = await Promise.all(
+            companies.map(async (company) => {
+                const { count, error: countError } = await client
+                    .from('opoint_users')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('tenant_id', company.id)
+                    .eq('status', 'Active');
+                
+                return {
+                    ...company,
+                    used_licenses: countError ? company.used_licenses : (count || 0)
+                };
+            })
+        );
+        
+        return { data: companiesWithUsage, error: null };
     },
 
     async getCompanyById(companyId) {

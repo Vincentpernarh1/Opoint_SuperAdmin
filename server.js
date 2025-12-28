@@ -360,10 +360,10 @@ function transformUser(user) {
         status: user.status,
         avatarUrl: user.avatar_url,
         team: user.team || '',
-        companyId: user.company_id,
+        companyId: user.tenant_id || user.company_id, // Prefer tenant_id, fallback to company_id
         tenantId: user.tenant_id,
-        companyName: user.company_name,
-        basicSalary: parseFloat(user.basic_salary),
+        companyName: user.company_name || 'N/A',
+        basicSalary: parseFloat(user.basic_salary) || 0,
         hireDate: user.hire_date ? new Date(user.hire_date) : undefined,
         mobileMoneyNumber: user.mobile_money_number,
         lastLogin: user.last_login ? new Date(user.last_login.replace(' ', 'T')) : undefined,
@@ -1189,7 +1189,9 @@ app.delete('/api/companies/:id', async (req, res) => {
 app.get('/api/users', async (req, res) => {
     try {
         const users = await getUsers();
-        res.json({ success: true, data: users });
+        // Transform users to match frontend format
+        const transformedUsers = users.map(user => transformUser(user));
+        res.json({ success: true, data: transformedUsers });
     } catch (error) {
         console.error('Error fetching users:', error);
         res.status(500).json({ 
@@ -1210,7 +1212,8 @@ app.get('/api/users/:id', async (req, res) => {
             });
         }
 
-        res.json({ success: true, data: user });
+        // Transform user to match frontend format
+        res.json({ success: true, data: transformUser(user) });
     } catch (error) {
         console.error('Error fetching user:', error);
         res.status(500).json({ 

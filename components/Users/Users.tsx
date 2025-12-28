@@ -212,10 +212,16 @@ const Users = ({ theme }: { theme: 'light' | 'dark' }) => {
     });
   };
 
-  const getCompanyName = (companyId?: string) => {
-    if (!companyId) return 'N/A';
-    const company = companies.find(c => c.id === companyId);
-    return company?.name || 'Unknown';
+  const getCompanyName = (user: User) => {
+    // First try to use the companyName field from the user object
+    if (user.companyName && user.companyName !== 'N/A') {
+      return user.companyName;
+    }
+    
+    // Fallback to looking up by companyId
+    if (!user.companyId) return 'N/A';
+    const company = companies.find(c => c.id === user.companyId);
+    return company?.name || 'N/A';
   };
 
   const getStatusBadge = (status: UserStatus) => {
@@ -427,7 +433,7 @@ const Users = ({ theme }: { theme: 'light' | 'dark' }) => {
                   <td>
                     <div className="company-info">
                       <BuildingOfficeIcon className="company-icon" />
-                      {getCompanyName(user.companyId)}
+                      {getCompanyName(user)}
                     </div>
                   </td>
                   <td>{getStatusBadge(user.status)}</td>
