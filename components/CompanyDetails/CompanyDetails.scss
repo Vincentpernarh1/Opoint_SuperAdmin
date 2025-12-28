@@ -392,3 +392,149 @@
     }
   }
 }
+
+// Dark theme styles
+.dark {
+  .company-details-page {
+    background-color: #0f172a;
+
+    .page-header {
+      background-color: #1e293b;
+      border-color: #334155;
+
+      h1 {
+        color: #f1f5f9;
+      }
+
+      .back-link {
+        color: #cbd5e1;
+
+        &:hover {
+          color: constants.$primary-color;
+        }
+      }
+    }
+
+    .loading, .error {
+      h2 {
+        color: #f1f5f9;
+      }
+
+      p {
+        color: #94a3b8;
+      }
+    }
+
+    .company-details-content {
+      .details-grid {
+        .detail-card {
+          background-color: #1e293b;
+          border: 1px solid #334155;
+
+          .card-header {
+            background-color: #0f172a;
+            border-bottom-color: #334155;
+
+            h3 {
+              color: #f1f5f9;
+            }
+          }
+
+          .card-content {
+            .detail-row {
+              border-bottom-color: #334155;
+
+              .label {
+                color: #cbd5e1;
+              }
+
+              .value {
+                color: #f1f5f9;
+              }
+            }
+
+            .license-usage {
+              .usage-bar {
+                background-color: #334155;
+              }
+
+              .usage-text {
+                color: #cbd5e1;
+              }
+            }
+
+            .login-access-section {
+              .url-container {
+                .url-input {
+                  background-color: #0f172a;
+                  border-color: #475569;
+                  color: #f1f5f9;
+
+                  &:focus {
+                    border-color: constants.$primary-color;
+                  }
+                }
+
+                .copy-btn {
+                  background-color: #0f172a;
+                  border-color: #475569;
+                  color: #cbd5e1;
+
+                  &:hover {
+                    background-color: #1e293b;
+                    border-color: #64748b;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      .modules-grid {
+        .module-item {
+          &.enabled {
+            background-color: rgba(22, 101, 52, 0.2);
+            border-color: rgba(187, 247, 208, 0.2);
+
+            .module-name {
+              color: #86efac;
+            }
+          }
+
+          &.disabled {
+            background-color: rgba(153, 27, 27, 0.2);
+            border-color: rgba(254, 202, 202, 0.2);
+
+            .module-name {
+              color: #fca5a5;
+            }
+          }
+        }
+      }
+
+      .quick-actions {
+        background-color: #1e293b;
+        border: 1px solid #334155;
+
+        h3 {
+          color: #f1f5f9;
+        }
+
+        .actions-grid {
+          .action-card {
+            background-color: #0f172a;
+            border-color: #475569;
+            color: #cbd5e1;
+
+            &:hover {
+              background-color: constants.$primary-color;
+              color: white;
+              border-color: constants.$primary-color;
+            }
+          }
+        }
+      }
+    }
+  }
+}

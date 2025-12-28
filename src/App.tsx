@@ -28,7 +28,10 @@ const App = () => {
     return user && user.role === UserRole.SUPER_ADMIN ? user : null;
   });
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const savedTheme = localStorage.getItem('theme');
+    return (savedTheme === 'dark' || savedTheme === 'light') ? savedTheme : 'light';
+  });
 
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     const user = await authService.login(email, password);
@@ -49,7 +52,9 @@ const App = () => {
   };
 
   const toggleTheme = () => {
-    setTheme(theme === 'light' ? 'dark' : 'light');
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
   };
 
   return (
