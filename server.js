@@ -10,10 +10,14 @@ import { validatePasswordStrength } from './utils/passwordValidator.js';
 const app = express();
 
 // --- MIDDLEWARE ---
-// app.use(cors({
-//     origin: process.env.FRONTEND_URL || ['http://localhost:3000', 'http://192.168.0.93:3000'],
-//     credentials: true
-// }));
+app.use(cors({
+    origin: process.env.FRONTEND_URL || [
+        'http://localhost:3000', 
+        'http://192.168.0.93:3000',
+        'https://opointsuperadmin-production.up.railway.app'
+    ],
+    credentials: true
+}));
 app.use(express.json());
 
 // Request logging middleware
