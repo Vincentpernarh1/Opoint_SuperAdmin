@@ -40,7 +40,16 @@ const UserDetail = ({ theme }: { theme: 'light' | 'dark' }) => {
       const result = await response.json();
       
       if (result.success) {
-        setUser(result.data);
+        // Parse dates from strings to Date objects
+        const userData = {
+          ...result.data,
+          hireDate: result.data.hireDate ? new Date(result.data.hireDate) : undefined,
+          lastLogin: result.data.lastLogin ? new Date(result.data.lastLogin) : undefined,
+          createdAt: new Date(result.data.createdAt),
+          updatedAt: new Date(result.data.updatedAt),
+          passwordChangedAt: result.data.passwordChangedAt ? new Date(result.data.passwordChangedAt) : undefined,
+        };
+        setUser(userData);
       } else {
         setNotification({
           message: 'Failed to load user details',
