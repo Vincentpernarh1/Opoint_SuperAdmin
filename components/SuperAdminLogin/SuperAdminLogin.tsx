@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LogoIcon, MailIcon, LockIcon, KeyIcon } from '../Icons/Icons';
+import { LogoIcon, MailIcon, LockIcon, KeyIcon, EyeIcon, EyeSlashIcon } from '../Icons/Icons';
 import { api } from '../../services/api';
 import './SuperAdminLogin.scss';
 
@@ -10,6 +10,7 @@ interface SuperAdminLoginProps {
 const SuperAdminLogin = ({ onLogin }: SuperAdminLoginProps) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [failedAttempts, setFailedAttempts] = useState(0);
@@ -110,7 +111,7 @@ const SuperAdminLogin = ({ onLogin }: SuperAdminLoginProps) => {
                         <input
                             id="password"
                             name="password"
-                            type="password"
+                            type={showPassword ? "text" : "password"}
                             autoComplete="current-password"
                             required
                             className="login-input"
@@ -118,6 +119,14 @@ const SuperAdminLogin = ({ onLogin }: SuperAdminLoginProps) => {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                         />
+                        <button
+                            type="button"
+                            className="password-toggle"
+                            onClick={() => setShowPassword(!showPassword)}
+                            aria-label={showPassword ? "Hide password" : "Show password"}
+                        >
+                            {showPassword ? <EyeSlashIcon /> : <EyeIcon />}
+                        </button>
                     </div>
 
                     {error && (

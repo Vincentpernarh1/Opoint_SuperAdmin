@@ -1,2 +1,15 @@
-$primary-color: #4f46e5;
-$primary-hover-color: #4338ca;
+// Import design system variables
+@use './_variables' as *;
+
+// Legacy support - keep existing variable names
+$primary-color: $primary-600;
+$primary-hover-color: $primary-700;
+
+// Export commonly used design tokens
+$background-light: $neutral-50;
+$background-white: #ffffff;
+$text-primary: $neutral-900;
+$text-secondary: $neutral-600;
+$text-tertiary: $neutral-500;
+$border-color: $neutral-200;
+$border-color-hover: $neutral-300;

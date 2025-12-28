@@ -10,8 +10,10 @@ export default defineConfig(({ mode }) => {
         host: '0.0.0.0',
         proxy: {
           '/api': {
-            target: 'http://192.168.0.93:3001',
+            target: env.REACT_APP_BASE_URL || 'http://localhost:3001',
             changeOrigin: true,
+            secure: false,
+            rewrite: (path) => path,
           },
         },
       },
