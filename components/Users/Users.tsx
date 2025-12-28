@@ -12,7 +12,8 @@ import {
   XCircleIcon,
   SearchIcon,
   BuildingOfficeIcon,
-  UserCircleIcon
+  UserCircleIcon,
+  ShieldCheckIcon
 } from '../Icons/Icons';
 import Loading from '../Loading/Loading';
 import NotificationOverlay from '../NotificationOverlay/NotificationOverlay';
@@ -108,8 +109,11 @@ const Users = ({ theme }: { theme: 'light' | 'dark' }) => {
     if (companyId) {
       setCompanyFilter(companyId);
     }
+    // Don't set role filter when fetching admin users from server
+    // The server already handles the filtering and returns both Admin and Super Admin
     if (role && role === 'admin') {
-      setRoleFilter(UserRole.ADMIN);
+      // Keep roleFilter as 'all' to show all returned users (Admin + Super Admin)
+      setRoleFilter('all');
     }
   }, [searchParams]);
 
@@ -120,24 +124,21 @@ const Users = ({ theme }: { theme: 'light' | 'dark' }) => {
   const loadData = async () => {
     try {
       if (role === 'admin' && companyId) {
-        // Load admin details from company
-        const company = await api.getCompany(companyId);
-        const adminUser: User = {
-          id: `admin-${company.id}`,
-          name: company.adminName || 'N/A',
-          email: company.adminEmail || 'N/A',
-          role: UserRole.ADMIN,
-          status: UserStatus.ACTIVE,
-          avatarUrl: '',
-          team: 'Management',
-          companyId: company.id,
-          basicSalary: 0,
-          hireDate: new Date(),
-          createdAt: company.createdAt,
-          updatedAt: company.updatedAt || new Date()
-        };
-        setUsers([adminUser]);
-        setCompanies([company]);
+        console.log('🔍 Loading admin users for company:', companyId);
+        // Fetch admin users from the API endpoint with role filter
+        const response = await fetch(`/api/users?companyId=${companyId}&role=admin`);
+        const result = await response.json();
+        
+        if (result.success) {
+          console.log('✅ Received admin users:', result.data);
+          setUsers(result.data);
+          
+          // Also load company data for display
+          const company = await api.getCompany(companyId);
+          setCompanies([company]);
+        } else {
+          throw new Error(result.error || 'Failed to fetch admin users');
+        }
       } else {
         const [usersData, companiesData] = await Promise.all([
           api.getUsers(),
@@ -238,7 +239,8 @@ const Users = ({ theme }: { theme: 'light' | 'dark' }) => {
     );
   };
 
-  const getRoleBadge = (role: UserRole) => {
+  const getRoleBadge = (user: User) => {
+    const role = user.role;
     const roleColors = {
       [UserRole.EMPLOYEE]: 'employee',
       [UserRole.ADMIN]: 'admin',
@@ -247,6 +249,16 @@ const Users = ({ theme }: { theme: 'light' | 'dark' }) => {
       [UserRole.PAYMENTS]: 'payments',
       [UserRole.SUPER_ADMIN]: 'super-admin',
     };
+
+    // Display Super Admin for the main company admin
+    if (role === 'Super Admin' || user.isSuperAdmin) {
+      return (
+        <span className="role-badge super-admin">
+          <ShieldCheckIcon className="role-icon" />
+          Super Admin
+        </span>
+      );
+    }
 
     return (
       <span className={`role-badge ${roleColors[role]}`}>
@@ -429,7 +441,7 @@ const Users = ({ theme }: { theme: 'light' | 'dark' }) => {
                       </div>
                     </div>
                   </td>
-                  <td>{getRoleBadge(user.role)}</td>
+                  <td>{getRoleBadge(user)}</td>
                   <td>
                     <div className="company-info">
                       <BuildingOfficeIcon className="company-icon" />

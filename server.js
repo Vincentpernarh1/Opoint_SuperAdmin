@@ -1188,10 +1188,76 @@ app.delete('/api/companies/:id', async (req, res) => {
 // --- USER MANAGEMENT ENDPOINTS ---
 app.get('/api/users', async (req, res) => {
     try {
-        const { companyId } = req.query;
+        const { companyId, role } = req.query;
+               
         let users = await getUsers();
+               
+        // Special handling for admin role filter with companyId
+        if (companyId && role && role.toLowerCase() === 'admin') {
+           
+            // Get company details to fetch the main admin
+            const { data: company, error: companyError } = await db.getCompanyById(companyId);
+            
+            // Filter users by companyId (tenantId) first
+            const companyUsers = users.filter(user => user.tenant_id === companyId);
+           
+            // Filter for admin role users
+            const adminUsers = companyUsers.filter(user => {
+                const isAdmin = user.role && user.role.toLowerCase() === 'admin';
+                return isAdmin;
+            });
+            
+            let allAdmins = [];
+            
+            // Add the Super Admin from company table (if exists)
+            if (company && company.admin_email) {
+                // Check if this admin exists in users table
+                const existingAdmin = adminUsers.find(u => u.email === company.admin_email);
+                
+                if (existingAdmin) {
+                    // Mark existing user as Super Admin
+                    const transformedAdmin = transformUser(existingAdmin);
+                    transformedAdmin.role = 'Super Admin';
+                    transformedAdmin.isSuperAdmin = true;
+                    allAdmins.push(transformedAdmin);
+                } else {
+                   
+                    allAdmins.push({
+                        id: `company-admin-${company.id}`,
+                        name: company.admin_name || 'Company Admin',
+                        email: company.admin_email,
+                        role: 'Super Admin',
+                        status: company.status || 'Active',
+                        avatarUrl: '',
+                        team: '',
+                        companyId: company.id,
+                        tenantId: company.id,
+                        companyName: company.name,
+                        basicSalary: 0,
+                        hireDate: new Date(company.created_at),
+                        mobileMoneyNumber: '',
+                        createdAt: new Date(company.created_at),
+                        updatedAt: new Date(company.updated_at || company.created_at),
+                        isSuperAdmin: true
+                    });
+                }
+            }
+            
+            // Add all other admins from users table
+            const regularAdmins = adminUsers
+                .filter(user => user.email !== company?.admin_email)
+                .map(user => {
+                    const transformed = transformUser(user);
+                    transformed.isSuperAdmin = false;
+                    return transformed;
+                });
+            
+            
+            allAdmins = [...allAdmins, ...regularAdmins];
+            return res.json({ success: true, data: allAdmins });
+        }
         
-        // Filter by companyId if provided
+        // Filter by companyId if provided (for non-admin queries)
         if (companyId) {
             users = users.filter(user => user.tenant_id === companyId);
         }

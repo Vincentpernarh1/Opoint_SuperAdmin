@@ -69,6 +69,7 @@ export interface User {
   passwordChangedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
+  isSuperAdmin?: boolean; // Indicates if user is the main company admin
 }
 
 export enum TimeEntryType {
