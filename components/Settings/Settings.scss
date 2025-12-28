@@ -387,3 +387,77 @@
     }
   }
 }
+
+// ===== RESPONSIVE STYLES =====
+
+@media (max-width: 767px) {
+  .settings-page {
+    padding: 1rem;
+  }
+
+  .settings-container {
+    flex-direction: column;
+  }
+
+  .settings-sidebar {
+    width: 100%;
+    padding: 1rem;
+
+    h1 {
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .settings-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+
+      .nav-item {
+        flex: 1 1 calc(50% - 0.25rem);
+        min-width: 120px;
+        padding: 0.5rem;
+        margin-bottom: 0;
+
+        .nav-label {
+          font-size: 0.75rem;
+        }
+
+        .nav-icon {
+          width: 1rem;
+          height: 1rem;
+        }
+      }
+    }
+  }
+
+  .settings-content {
+    padding: 1rem;
+  }
+
+  .system-info {
+    .info-item {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.25rem;
+
+      .label {
+        font-size: 0.875rem;
+      }
+
+      .value {
+        font-size: 0.875rem;
+      }
+    }
+  }
+}
+
+@media (min-width: 768px) {
+  .settings-container {
+    flex-direction: row;
+  }
+
+  .settings-sidebar {
+    width: 280px;
+  }
+}
