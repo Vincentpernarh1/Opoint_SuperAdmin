@@ -4,8 +4,13 @@ import express from 'express';
 import cors from 'cors';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import db, { getSupabaseClient, setCompanyContext } from './services/database.js';
 import { validatePasswordStrength } from './utils/passwordValidator.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
@@ -29,6 +34,11 @@ app.use((req, res, next) => {
 
 const PORT = process.env.PORT || 3001;
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+
+// Serve static files in production
+if (IS_PRODUCTION) {
+    app.use(express.static(path.join(__dirname, 'dist')));
+}
 
 // --- CONFIGURATION & SECRETS ---
 const CONFIG = {
@@ -1622,6 +1632,13 @@ app.post('/api/momo/callback', async (req, res) => {
         });
     }
 });
+
+// Catch-all route for client-side routing (must be after all API routes)
+if (IS_PRODUCTION) {
+    app.get('*', (req, res) => {
+        res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+    });
+}
 
 // Error handling middleware (must be last)
 app.use(errorHandler);
