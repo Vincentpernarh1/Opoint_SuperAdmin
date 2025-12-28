@@ -148,42 +148,41 @@ class ApiService {
   }
 
   async updateUser(id: string, updates: Partial<User>): Promise<User | null> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const index = this.users.findIndex(u => u.id === id);
-        if (index === -1) {
-          resolve(null);
-          return;
-        }
-
-        const oldUser = { ...this.users[index] };
-        this.users[index] = {
-          ...this.users[index],
-          ...updates,
-          updatedAt: new Date()
-        };
-
-        this.logAudit('update', 'user', id, 'superadmin', { old: oldUser, new: this.users[index] });
-        resolve(this.users[index]);
-      }, 500);
+    const response = await fetch(`/api/users/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updates),
     });
+
+    if (!response.ok) {
+      throw new Error('Failed to update user');
+    }
+
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to update user');
+    }
+
+    return result.data;
   }
 
   async deleteUser(id: string): Promise<boolean> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const index = this.users.findIndex(u => u.id === id);
-        if (index === -1) {
-          resolve(false);
-          return;
-        }
-
-        const user = this.users[index];
-        this.users.splice(index, 1);
-        this.logAudit('delete', 'user', id, 'superadmin', { deleted: user });
-        resolve(true);
-      }, 500);
+    const response = await fetch(`/api/users/${id}`, {
+      method: 'DELETE',
     });
+
+    if (!response.ok) {
+      throw new Error('Failed to delete user');
+    }
+
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to delete user');
+    }
+
+    return true;
   }
 
   // Legacy methods for backward compatibility
