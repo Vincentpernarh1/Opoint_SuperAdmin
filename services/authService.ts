@@ -2,12 +2,10 @@ import type { User } from '../types';
 import { UserRole, UserStatus } from '../types';
 import { SUPER_ADMIN_USER } from '../constants';
 
-const API_BASE_URL = process.env.REACT_APP_BASE_URL || `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
-
 export const authService = {
   login: async (email: string, password: string): Promise<User | null> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/superadmin/login`, {
+      const response = await fetch('/api/superadmin/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
