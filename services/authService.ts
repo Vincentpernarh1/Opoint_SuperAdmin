@@ -2,7 +2,7 @@ import type { User } from '../types';
 import { UserRole, UserStatus } from '../types';
 import { SUPER_ADMIN_USER } from '../constants';
 
-const API_BASE_URL = `http://${window.location.hostname}:3001`;
+const API_BASE_URL = process.env.REACT_APP_BASE_URL || `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
 
 export const authService = {
   login: async (email: string, password: string): Promise<User | null> => {

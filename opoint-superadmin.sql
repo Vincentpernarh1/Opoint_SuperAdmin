@@ -286,3 +286,6 @@ commit;
 
 select* from opoint_users
 where email = 'pernarhv30@gmail.com';
+
+
+select * from opoint_companies;
