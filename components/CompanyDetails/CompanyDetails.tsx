@@ -162,8 +162,7 @@ const CompanyDetails = ({ theme }: { theme: 'light' | 'dark' }) => {
               <div className="license-usage">
                 <div className="usage-bar">
                   <div
-                    className={`usage-fill usage-${Math.round((actualUsedLicenses / company.licenseCount) * 100)}`}
-                    style={{ width: `${Math.min((actualUsedLicenses / company.licenseCount) * 100, 100)}%` }}
+                    className={`usage-fill usage-${Math.min(Math.round((actualUsedLicenses / company.licenseCount) * 100), 100)}`}
                   ></div>
                 </div>
                 <span className="usage-text">
