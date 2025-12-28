@@ -14,6 +14,8 @@ const Companies = lazy(() => import('../components/Companies/Companies'));
 import CompanyDetails from '../components/CompanyDetails/CompanyDetails';
 import EditCompanyPage from '../components/EditCompanyPage/EditCompanyPage';
 const Users = lazy(() => import('../components/Users/Users'));
+const UserDetail = lazy(() => import('../components/UserDetail/UserDetail'));
+const EditUser = lazy(() => import('../components/EditUser/EditUser'));
 const Settings = lazy(() => import('../components/Settings/Settings'));
 const SuperAdmins = lazy(() => import('../components/SuperAdmins/SuperAdmins'));
 const EditSuperAdmin = lazy(() => import('../components/EditSuperAdmin/EditSuperAdmin'));
@@ -78,6 +80,8 @@ const App = () => {
             <Route path="companies/add" element={<AddCompanyPage />} />
             <Route path="companies/:id/edit" element={<EditCompanyPage theme={theme} />} />
             <Route path="users" element={<Users theme={theme} />} />
+            <Route path="users/:id" element={<UserDetail theme={theme} />} />
+            <Route path="users/:id/edit" element={<EditUser theme={theme} />} />
             <Route path="superadmins" element={<SuperAdmins theme={theme} />} />
             <Route path="superadmins/:id/edit" element={<EditSuperAdmin theme={theme} />} />
             <Route path="settings" element={<Settings currentUser={currentUser!} onUpdateUser={() => {}} theme={theme} />} />

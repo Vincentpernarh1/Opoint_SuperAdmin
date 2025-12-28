@@ -535,7 +535,7 @@ export const db = {
         if (!client) return { data: null, error: 'Database not configured' };
         
         const { data, error } = await client
-            .from('P360-Opoint_User')
+            .from('opoint_users')
             .update({ 
                 last_login: new Date().toISOString(),
                 updated_at: new Date().toISOString()
